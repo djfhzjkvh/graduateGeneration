@@ -22,7 +22,6 @@
         <springdoc.version>1.7.0</springdoc.version>
         <mybatis-plus.version>3.5.5</mybatis-plus.version>
         <mysql.version>8.4.0</mysql.version>
-        <springdoc.version>1.7.0</springdoc.version>
     </properties>
 
     <dependencies>
@@ -49,11 +48,6 @@
             <artifactId>mysql-connector-j</artifactId>
             <version>${mysql.version}</version>
             <scope>runtime</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.springdoc</groupId>
-            <artifactId>springdoc-openapi-ui</artifactId>
-            <version>${springdoc.version}</version>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>

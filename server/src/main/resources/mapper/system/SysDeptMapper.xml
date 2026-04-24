@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.graduation.crm.modules.system.mapper.SysDeptMapper">
+
+    <select id="selectDeptList" resultType="com.graduation.crm.modules.system.vo.DeptVO">
+        SELECT
+            d.id,
+            d.dept_name,
+            d.parent_id,
+            d.leader_id,
+            u.nickname AS leader_name,
+            d.status
+        FROM sys_dept d
+        LEFT JOIN sys_user u ON d.leader_id = u.id
+        WHERE d.status = 1
+        ORDER BY d.parent_id ASC, d.id ASC
+    </select>
+</mapper>
+

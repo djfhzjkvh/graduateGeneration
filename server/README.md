@@ -32,6 +32,12 @@ graduate_generation
 
 ## MVP APIs
 
+- `POST /api/app/auth/login`
+- `GET /api/app/auth/profile`
+- `POST /api/app/auth/logout`
+- `POST /api/admin/auth/login`
+- `GET /api/admin/auth/profile`
+- `POST /api/admin/auth/logout`
 - `GET /api/app/customers`
 - `GET /api/app/customers/{id}`
 - `POST /api/app/customers`
@@ -44,3 +50,27 @@ graduate_generation
 - `PUT /api/app/tasks/{id}/complete`
 - `GET /api/admin/customers`
 - `GET /api/admin/tasks`
+- `GET /api/admin/users`
+- `GET /api/admin/users/{id}`
+- `POST /api/admin/users`
+- `PUT /api/admin/users/{id}`
+- `DELETE /api/admin/users/{id}`
+- `GET /api/admin/roles`
+- `GET /api/admin/depts/tree`
+
+## Demo accounts
+
+```text
+admin / 123456
+manager_hx / 123456
+manager_nk / 123456
+advisor_a / 123456
+advisor_b / 123456
+advisor_c / 123456
+```
+
+## Swagger
+
+```text
+http://localhost:8080/swagger-ui.html
+```

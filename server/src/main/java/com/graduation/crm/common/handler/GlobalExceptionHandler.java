@@ -2,10 +2,12 @@ package com.graduation.crm.common.handler;
 
 import com.graduation.crm.common.exception.BusinessException;
 import com.graduation.crm.common.result.Result;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -14,6 +16,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(BusinessException.class)
     public Result<Void> handleBusinessException(BusinessException e) {
+        log.warn("Business exception: {}", e.getMessage());
         return Result.fail(500, e.getMessage());
     }
 
@@ -26,14 +29,16 @@ public class GlobalExceptionHandler {
         if (e.getBindingResult().getFieldError() != null) {
             message = e.getBindingResult().getFieldError().getDefaultMessage();
         }
+        log.warn("Validation exception: {}", message);
         return Result.fail(400, message);
     }
 
     /**
-     * 未预期异常不直接暴露堆栈信息，后续可接入日志系统记录详细错误。
+     * 未预期异常不直接暴露堆栈信息，但必须写入日志，方便定位线上问题。
      */
     @ExceptionHandler(Exception.class)
     public Result<Void> handleException(Exception e) {
+        log.error("Unexpected system exception", e);
         return Result.fail(500, "系统异常");
     }
 }
