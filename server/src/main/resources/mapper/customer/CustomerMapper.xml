@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.graduation.crm.modules.customer.mapper.CustomerMapper">
+
+    <select id="selectCustomerPage" resultType="com.graduation.crm.modules.customer.vo.CustomerListVO">
+        SELECT
+            c.id,
+            c.customer_name,
+            c.mobile,
+            c.status,
+            c.intent_level,
+            c.budget_min,
+            c.budget_max,
+            c.region,
+            c.house_type,
+            c.heat_score,
+            c.latest_follow_time,
+            c.next_follow_time,
+            advisor.nickname AS advisor_name,
+            manager.nickname AS manager_name
+        FROM crm_customer c
+        LEFT JOIN sys_user advisor ON c.advisor_id = advisor.id
+        LEFT JOIN sys_user manager ON c.manager_id = manager.id
+        WHERE c.deleted = 0
+        <if test="query.keyword != null and query.keyword != ''">
+            AND (c.customer_name LIKE CONCAT('%', #{query.keyword}, '%')
+                OR c.mobile LIKE CONCAT('%', #{query.keyword}, '%'))
+        </if>
+        <if test="query.status != null and query.status != ''">
+            AND c.status = #{query.status}
+        </if>
+        <if test="query.advisorId != null">
+            AND c.advisor_id = #{query.advisorId}
+        </if>
+        <if test="query.managerId != null">
+            AND c.manager_id = #{query.managerId}
+        </if>
+        <if test="query.deptId != null">
+            AND c.dept_id = #{query.deptId}
+        </if>
+        <if test="query.minHeatScore != null">
+            AND c.heat_score &gt;= #{query.minHeatScore}
+        </if>
+        <if test="query.maxHeatScore != null">
+            AND c.heat_score &lt;= #{query.maxHeatScore}
+        </if>
+        ORDER BY c.created_at DESC
+    </select>
+
+    <select id="selectCustomerDetail" resultType="com.graduation.crm.modules.customer.vo.CustomerDetailVO">
+        SELECT
+            c.id,
+            c.customer_name,
+            c.mobile,
+            c.gender,
+            c.age,
+            c.source,
+            c.status,
+            c.intent_level,
+            c.budget_min,
+            c.budget_max,
+            c.region,
+            c.house_type,
+            c.purpose,
+            c.remark,
+            c.heat_score,
+            c.advisor_id,
+            advisor.nickname AS advisor_name,
+            c.manager_id,
+            manager.nickname AS manager_name,
+            c.latest_follow_time,
+            c.next_follow_time
+        FROM crm_customer c
+        LEFT JOIN sys_user advisor ON c.advisor_id = advisor.id
+        LEFT JOIN sys_user manager ON c.manager_id = manager.id
+        WHERE c.id = #{id}
+          AND c.deleted = 0
+        LIMIT 1
+    </select>
+</mapper>
+

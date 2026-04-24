@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.graduation.crm.modules.follow.mapper.FollowRecordMapper">
+
+    <select id="selectByCustomerId" resultType="com.graduation.crm.modules.follow.vo.FollowRecordVO">
+        SELECT
+            f.id,
+            f.customer_id,
+            f.follow_type,
+            f.follow_result,
+            f.content,
+            f.summary,
+            f.next_follow_time,
+            f.user_id,
+            u.nickname AS user_name,
+            f.created_at
+        FROM crm_follow_record f
+        LEFT JOIN sys_user u ON f.user_id = u.id
+        WHERE f.customer_id = #{customerId}
+        ORDER BY f.created_at DESC
+    </select>
+</mapper>
+
