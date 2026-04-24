@@ -17,11 +17,14 @@ import com.graduation.crm.modules.ai.vo.LeadExtractVO;
 import com.graduation.crm.modules.ai.vo.ScriptGenerateVO;
 import com.graduation.crm.modules.customer.service.CustomerService;
 import com.graduation.crm.modules.customer.vo.CustomerDetailVO;
+import com.graduation.crm.modules.file.service.FileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +34,7 @@ public class AiServiceImpl implements AiService {
     private final CustomerService customerService;
     private final LeadExtractRecordMapper leadExtractRecordMapper;
     private final ObjectMapper objectMapper;
+    private final FileService fileService;
 
     @Override
     public AiChatVO chat(AiChatDTO dto) {
@@ -63,7 +67,7 @@ public class AiServiceImpl implements AiService {
         AiChatDTO chatDTO = new AiChatDTO();
         chatDTO.setBizType("LEAD_EXTRACT");
         chatDTO.setPrompt(buildLeadExtractPrompt(dto));
-        chatDTO.setImageUrls(dto.getImageUrls());
+        chatDTO.setImageUrls(resolveImageInputs(dto));
         chatDTO.setAudios(dto.getAudios());
         AiChatVO chatVO = qwenAiClient.chat(chatDTO);
 
@@ -85,6 +89,18 @@ public class AiServiceImpl implements AiService {
 
         vo.setExtractId(record.getId());
         return vo;
+    }
+
+    private List<String> resolveImageInputs(LeadExtractDTO dto) {
+        List<String> images = new ArrayList<>();
+        if (dto.getImageUrls() != null) {
+            images.addAll(dto.getImageUrls());
+        }
+        if (dto.getSourceFileId() != null) {
+            // Qwen 云端无法访问本机 localhost 图片，因此本地上传文件转成 data URL 传给模型。
+            images.add(fileService.readImageAsDataUrl(dto.getSourceFileId()));
+        }
+        return images.isEmpty() ? null : images;
     }
 
     @Override

@@ -65,6 +65,15 @@ graduate_generation
 - `GET /api/app/heat/{customerId}`
 - `POST /api/app/heat/calculate/{customerId}`
 - `GET /api/app/heat/high-intent?advisorId=4`
+- `POST /api/app/notes/auto-generate`
+- `POST /api/app/notes`
+- `GET /api/app/customers/{customerId}/notes`
+- `GET /api/app/notes/{id}`
+- `PUT /api/app/notes/{id}`
+- `DELETE /api/app/notes/{id}`
+- `POST /api/app/competitors/compare`
+- `POST /api/app/competitors/ai-response`
+- `GET /api/app/customers/{customerId}/competitor-history`
 - `GET /api/admin/customers`
 - `GET /api/admin/tasks`
 - `GET /api/admin/customer-tags`
@@ -94,6 +103,18 @@ graduate_generation
 - `POST /api/admin/competitors`
 - `PUT /api/admin/competitors/{id}`
 - `DELETE /api/admin/competitors/{id}`
+- `GET /api/admin/reports/daily`
+- `GET /api/admin/reports/conversion`
+- `GET /api/admin/reports/source`
+- `GET /api/admin/configs`
+- `PUT /api/admin/configs/{key}`
+- `GET /api/admin/ai/config`
+- `PUT /api/admin/ai/config`
+- `GET /api/admin/logs/ai`
+- `GET /api/admin/logs/operation`
+- `POST /api/app/files/upload`
+- `POST /api/admin/files/upload`
+- `GET /api/files/{id}`
 
 ## Demo accounts
 

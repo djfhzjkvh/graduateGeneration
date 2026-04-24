@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.graduation.crm.modules.admin.mapper.AdminLogMapper">
+
+    <select id="selectAiLogPage" resultType="com.graduation.crm.modules.admin.vo.AiCallLogVO">
+        SELECT
+            id,
+            biz_type,
+            biz_id,
+            model_name,
+            token_usage,
+            status,
+            error_msg,
+            created_at
+        FROM ai_call_log
+        WHERE 1 = 1
+        <if test="query.bizType != null and query.bizType != ''">
+            AND biz_type = #{query.bizType}
+        </if>
+        <if test="query.status != null and query.status != ''">
+            AND status = #{query.status}
+        </if>
+        <if test="query.dateStart != null and query.dateStart != ''">
+            AND DATE(created_at) &gt;= #{query.dateStart}
+        </if>
+        <if test="query.dateEnd != null and query.dateEnd != ''">
+            AND DATE(created_at) &lt;= #{query.dateEnd}
+        </if>
+        ORDER BY created_at DESC
+    </select>
+
+    <select id="selectOperLogPage" resultType="com.graduation.crm.modules.admin.vo.OperLogVO">
+        SELECT
+            l.id,
+            l.user_id,
+            u.username,
+            u.nickname,
+            l.biz_type,
+            l.biz_id,
+            l.action,
+            l.content,
+            l.ip,
+            l.created_at
+        FROM sys_oper_log l
+        LEFT JOIN sys_user u ON l.user_id = u.id
+        WHERE 1 = 1
+        <if test="query.userId != null">
+            AND l.user_id = #{query.userId}
+        </if>
+        <if test="query.bizType != null and query.bizType != ''">
+            AND l.biz_type = #{query.bizType}
+        </if>
+        <if test="query.action != null and query.action != ''">
+            AND l.action = #{query.action}
+        </if>
+        <if test="query.dateStart != null and query.dateStart != ''">
+            AND DATE(l.created_at) &gt;= #{query.dateStart}
+        </if>
+        <if test="query.dateEnd != null and query.dateEnd != ''">
+            AND DATE(l.created_at) &lt;= #{query.dateEnd}
+        </if>
+        ORDER BY l.created_at DESC
+    </select>
+</mapper>
+

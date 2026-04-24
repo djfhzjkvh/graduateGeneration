@@ -43,26 +43,26 @@
       </div>
 
       <el-table :data="tableData" v-loading="loading">
-        <el-table-column label="用户名" min-width="100">
-          <template #default="{ row }"><span class="cell-primary">{{ row.username }}</span></template>
+        <el-table-column label="用户名" min-width="140" show-overflow-tooltip>
+          <template #default="{ row }"><span class="cell-primary cell-ellipsis">{{ row.username }}</span></template>
         </el-table-column>
-        <el-table-column prop="nickname"    label="昵称"   width="90" />
-        <el-table-column label="手机号" width="130">
+        <el-table-column prop="nickname"    label="昵称"   width="120" show-overflow-tooltip />
+        <el-table-column label="手机号" width="155">
           <template #default="{ row }"><span class="cell-mono">{{ row.mobile }}</span></template>
         </el-table-column>
-        <el-table-column label="角色" width="90">
+        <el-table-column label="角色" width="120">
           <template #default="{ row }">
             <span :class="['badge', roleBadge(row.roleCode)]">{{ row.roleName }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="deptName"    label="部门"   width="90" />
-        <el-table-column prop="managerName" label="上级经理" width="90" />
-        <el-table-column label="状态" width="70">
+        <el-table-column prop="deptName"    label="部门"   width="120" show-overflow-tooltip />
+        <el-table-column prop="managerName" label="上级经理" width="120" show-overflow-tooltip />
+        <el-table-column label="状态" width="100">
           <template #default="{ row }">
             <span :class="['badge', row.status === 1 ? 'badge-success' : 'badge-danger']">{{ row.status === 1 ? '启用' : '禁用' }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="130" fixed="right">
+        <el-table-column label="操作" width="190" fixed="right">
           <template #default="{ row }">
             <el-button size="small" link @click="openEdit(row)">编辑</el-button>
             <el-button size="small" link :type="row.status === 1 ? 'danger' : 'primary'" @click="toggleStatus(row)">

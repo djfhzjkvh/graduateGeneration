@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.graduation.crm.modules.note.mapper.NoteMapper">
+
+    <select id="selectNoteDetail" resultType="com.graduation.crm.modules.note.vo.NoteVO">
+        SELECT
+            n.id,
+            n.customer_id,
+            c.customer_name,
+            n.follow_id,
+            n.note_type,
+            n.title,
+            n.summary,
+            n.objection_top3,
+            n.next_topic,
+            n.created_by,
+            u.nickname AS created_by_name,
+            n.created_at,
+            n.updated_at
+        FROM crm_note n
+        LEFT JOIN crm_customer c ON n.customer_id = c.id
+        LEFT JOIN sys_user u ON n.created_by = u.id
+        WHERE n.id = #{id}
+        LIMIT 1
+    </select>
+
+    <select id="selectByCustomerId" resultType="com.graduation.crm.modules.note.vo.NoteVO">
+        SELECT
+            n.id,
+            n.customer_id,
+            c.customer_name,
+            n.follow_id,
+            n.note_type,
+            n.title,
+            n.summary,
+            n.objection_top3,
+            n.next_topic,
+            n.created_by,
+            u.nickname AS created_by_name,
+            n.created_at,
+            n.updated_at
+        FROM crm_note n
+        LEFT JOIN crm_customer c ON n.customer_id = c.id
+        LEFT JOIN sys_user u ON n.created_by = u.id
+        WHERE n.customer_id = #{customerId}
+        ORDER BY n.created_at DESC
+    </select>
+</mapper>
+

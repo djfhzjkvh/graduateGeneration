@@ -17,13 +17,13 @@
       </div>
 
       <el-table :data="tableData" v-loading="loading">
-        <el-table-column label="客户姓名" min-width="100">
-          <template #default="{ row }"><span class="cell-primary">{{ row.customerName }}</span></template>
+        <el-table-column label="客户姓名" min-width="130" show-overflow-tooltip>
+          <template #default="{ row }"><span class="cell-primary cell-ellipsis">{{ row.customerName }}</span></template>
         </el-table-column>
-        <el-table-column label="手机号" width="140">
+        <el-table-column label="手机号" width="155">
           <template #default="{ row }"><span class="cell-mono">{{ row.mobile }}</span></template>
         </el-table-column>
-        <el-table-column label="热度分" width="130">
+        <el-table-column label="热度分" width="155">
           <template #default="{ row }">
             <div class="heat-bar">
               <div class="heat-dots">
@@ -33,25 +33,25 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="客户状态" width="90">
+        <el-table-column label="客户状态" width="115">
           <template #default="{ row }">
             <span :class="['badge', getBadgeClass(CUSTOMER_STATUS, row.status)]">{{ getLabel(CUSTOMER_STATUS, row.status) }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="region"      label="关注区域" width="100" />
-        <el-table-column label="预算范围" width="130">
+        <el-table-column prop="region"      label="关注区域" width="120" />
+        <el-table-column label="预算范围" width="145">
           <template #default="{ row }">
             <span style="font-size:12px" v-if="row.budgetMin != null">{{ row.budgetMin }}~{{ row.budgetMax }}万</span>
             <span v-else>—</span>
           </template>
         </el-table-column>
-        <el-table-column prop="advisorName" label="所属顾问" width="90" />
-        <el-table-column label="下次跟进" width="110">
+        <el-table-column prop="advisorName" label="所属顾问" width="115" />
+        <el-table-column label="下次跟进" width="145">
           <template #default="{ row }">
             <span :style="nextStyle(row.nextFollowTime)">{{ fmt(row.nextFollowTime) }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="80" fixed="right">
+        <el-table-column label="操作" width="95" fixed="right">
           <template #default="{ row }">
             <el-button size="small" link @click="openDetail(row)">详情</el-button>
           </template>

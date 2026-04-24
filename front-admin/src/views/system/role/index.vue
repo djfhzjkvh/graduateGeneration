@@ -11,16 +11,16 @@
         <span class="table-count">{{ tableData.length }} 条</span>
       </div>
       <el-table :data="tableData" v-loading="loading">
-        <el-table-column label="角色编码" width="120">
+        <el-table-column label="角色编码" width="150">
           <template #default="{ row }"><span class="cell-mono">{{ row.roleCode }}</span></template>
         </el-table-column>
-        <el-table-column label="角色名称" min-width="120">
-          <template #default="{ row }"><span class="cell-primary">{{ row.roleName }}</span></template>
+        <el-table-column label="角色名称" min-width="150" show-overflow-tooltip>
+          <template #default="{ row }"><span class="cell-primary cell-ellipsis">{{ row.roleName }}</span></template>
         </el-table-column>
-        <el-table-column prop="remark" label="说明" min-width="200">
-          <template #default="{ row }"><span style="color:var(--text-500); font-size:12px">{{ row.remark || roleDesc(row.roleCode) }}</span></template>
+        <el-table-column prop="remark" label="说明" min-width="260" show-overflow-tooltip>
+          <template #default="{ row }"><span class="cell-muted cell-ellipsis">{{ row.remark || roleDesc(row.roleCode) }}</span></template>
         </el-table-column>
-        <el-table-column label="状态" width="80">
+        <el-table-column label="状态" width="100">
           <template #default="{ row }">
             <span :class="['badge', row.status === 1 ? 'badge-success' : 'badge-danger']">{{ row.status === 1 ? '启用' : '禁用' }}</span>
           </template>

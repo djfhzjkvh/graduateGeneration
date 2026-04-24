@@ -11,22 +11,24 @@
         <span class="table-count">{{ total }} 条</span>
       </div>
       <el-table :data="tableData" v-loading="loading">
-        <el-table-column label="任务标题" min-width="160">
-          <template #default="{ row }"><span class="cell-primary">{{ row.title }}</span></template>
+        <el-table-column label="任务标题" min-width="280" show-overflow-tooltip>
+          <template #default="{ row }">
+            <span class="cell-primary cell-ellipsis">{{ row.title }}</span>
+          </template>
         </el-table-column>
-        <el-table-column prop="customerName" label="关联客户" width="100" />
-        <el-table-column prop="ownerName"    label="负责人"   width="90" />
-        <el-table-column label="应完成时间" width="130">
+        <el-table-column prop="customerName" label="关联客户" width="130" show-overflow-tooltip />
+        <el-table-column prop="ownerName"    label="负责人"   width="115" show-overflow-tooltip />
+        <el-table-column label="应完成时间" width="165">
           <template #default="{ row }">
             <span style="font-size:12px; color:var(--danger)">{{ row.taskDate }} {{ row.taskTime }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="优先级" width="80">
+        <el-table-column label="优先级" width="115">
           <template #default="{ row }">
             <span :class="['badge', getBadgeClass(TASK_PRIORITY, row.priority)]">{{ getLabel(TASK_PRIORITY, row.priority) }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="120" fixed="right">
+        <el-table-column label="操作" width="140" fixed="right">
           <template #default="{ row }">
             <el-button size="small" link @click="openDetail(row)">详情</el-button>
             <!-- TODO: 转派接口后端待补充 -->

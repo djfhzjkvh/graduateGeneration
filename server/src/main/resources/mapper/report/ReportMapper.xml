@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.graduation.crm.modules.report.mapper.ReportMapper">
+
+    <select id="selectDailyReports" resultType="com.graduation.crm.modules.report.vo.DailyReportVO">
+        SELECT
+            stat_date,
+            SUM(new_customer_count) AS new_customer_count,
+            SUM(high_intent_count) AS high_intent_count,
+            SUM(pending_task_count) AS pending_task_count,
+            SUM(expected_amount) AS expected_amount,
+            SUM(forget_task_count) AS forget_task_count
+        FROM report_daily_stat
+        WHERE 1 = 1
+        <if test="query.dateStart != null and query.dateStart != ''">
+            AND stat_date &gt;= #{query.dateStart}
+        </if>
+        <if test="query.dateEnd != null and query.dateEnd != ''">
+            AND stat_date &lt;= #{query.dateEnd}
+        </if>
+        <if test="query.deptId != null">
+            AND dept_id = #{query.deptId}
+        </if>
+        GROUP BY stat_date
+        ORDER BY stat_date ASC
+    </select>
+
+    <select id="countCustomers" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM crm_customer
+        WHERE deleted = 0
+        <if test="status != null and status != ''">
+            AND status = #{status}
+        </if>
+        <if test="query.dateStart != null and query.dateStart != ''">
+            AND DATE(created_at) &gt;= #{query.dateStart}
+        </if>
+        <if test="query.dateEnd != null and query.dateEnd != ''">
+            AND DATE(created_at) &lt;= #{query.dateEnd}
+        </if>
+        <if test="query.deptId != null">
+            AND dept_id = #{query.deptId}
+        </if>
+    </select>
+
+    <select id="selectSourceReports" resultType="com.graduation.crm.modules.report.vo.SourceReportVO">
+        SELECT
+            IFNULL(source, 'UNKNOWN') AS source,
+            COUNT(*) AS customer_count,
+            COUNT(CASE WHEN status = 'DEAL' THEN 1 END) AS deal_customer_count,
+            CASE
+                WHEN COUNT(*) = 0 THEN 0
+                ELSE ROUND(COUNT(CASE WHEN status = 'DEAL' THEN 1 END) / COUNT(*), 4)
+            END AS deal_rate
+        FROM crm_customer
+        WHERE deleted = 0
+        <if test="query.dateStart != null and query.dateStart != ''">
+            AND DATE(created_at) &gt;= #{query.dateStart}
+        </if>
+        <if test="query.dateEnd != null and query.dateEnd != ''">
+            AND DATE(created_at) &lt;= #{query.dateEnd}
+        </if>
+        <if test="query.deptId != null">
+            AND dept_id = #{query.deptId}
+        </if>
+        GROUP BY IFNULL(source, 'UNKNOWN')
+        ORDER BY customer_count DESC
+    </select>
+</mapper>
+

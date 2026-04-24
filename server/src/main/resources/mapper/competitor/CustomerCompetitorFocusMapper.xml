@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.graduation.crm.modules.competitor.mapper.CustomerCompetitorFocusMapper">
+
+    <select id="selectByCustomerId" resultType="com.graduation.crm.modules.competitor.vo.CustomerCompetitorFocusVO">
+        SELECT
+            f.id,
+            f.customer_id,
+            f.competitor_id,
+            cp.project_name AS competitor_name,
+            f.focus_content,
+            f.created_by,
+            u.nickname AS created_by_name,
+            f.created_at
+        FROM crm_customer_competitor_focus f
+        LEFT JOIN crm_competitor_project cp ON f.competitor_id = cp.id
+        LEFT JOIN sys_user u ON f.created_by = u.id
+        WHERE f.customer_id = #{customerId}
+        ORDER BY f.created_at DESC
+    </select>
+</mapper>
+

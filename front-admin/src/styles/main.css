@@ -317,6 +317,14 @@ body {
 
 /* ── Cell helpers ── */
 .cell-primary { font-weight: 500; color: var(--text-900); }
+.cell-muted { color: var(--text-500); font-size: 12px; }
+.cell-ellipsis {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .cell-mono { font-family: 'Sora', monospace; font-size: 12px; }
 
 /* ── Recent list (dashboard) ── */
