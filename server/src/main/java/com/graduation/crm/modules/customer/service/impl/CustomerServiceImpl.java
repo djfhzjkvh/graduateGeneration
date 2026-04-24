@@ -7,6 +7,8 @@ import com.graduation.crm.common.exception.BusinessException;
 import com.graduation.crm.common.result.PageResult;
 import com.graduation.crm.modules.admin.entity.SysOperLog;
 import com.graduation.crm.modules.admin.mapper.SysOperLogMapper;
+import com.graduation.crm.modules.competitor.mapper.CustomerCompetitorFocusMapper;
+import com.graduation.crm.modules.competitor.vo.CustomerCompetitorFocusVO;
 import com.graduation.crm.modules.customer.dto.CustomerAssignDTO;
 import com.graduation.crm.modules.customer.dto.CustomerAssignLogQueryDTO;
 import com.graduation.crm.modules.customer.dto.CustomerCreateDTO;
@@ -27,8 +29,17 @@ import com.graduation.crm.modules.customer.vo.CustomerExcelImportPreviewVO;
 import com.graduation.crm.modules.customer.vo.CustomerExcelImportResultVO;
 import com.graduation.crm.modules.customer.vo.CustomerExcelImportRowVO;
 import com.graduation.crm.modules.customer.vo.CustomerListVO;
+import com.graduation.crm.modules.customer.vo.CustomerProfileVO;
 import com.graduation.crm.modules.file.entity.SysFile;
 import com.graduation.crm.modules.file.service.FileService;
+import com.graduation.crm.modules.follow.mapper.FollowRecordMapper;
+import com.graduation.crm.modules.follow.vo.FollowRecordVO;
+import com.graduation.crm.modules.heat.mapper.HeatMapper;
+import com.graduation.crm.modules.note.mapper.NoteMapper;
+import com.graduation.crm.modules.note.vo.NoteVO;
+import com.graduation.crm.modules.task.dto.TaskQueryDTO;
+import com.graduation.crm.modules.task.service.TaskService;
+import com.graduation.crm.modules.task.vo.TaskVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.Cell;
@@ -72,6 +83,11 @@ public class CustomerServiceImpl implements CustomerService {
     private final CustomerAssignLogMapper customerAssignLogMapper;
     private final SysOperLogMapper sysOperLogMapper;
     private final FileService fileService;
+    private final FollowRecordMapper followRecordMapper;
+    private final NoteMapper noteMapper;
+    private final CustomerCompetitorFocusMapper customerCompetitorFocusMapper;
+    private final HeatMapper heatMapper;
+    private final TaskService taskService;
 
     @Override
     public PageResult<CustomerListVO> page(CustomerQueryDTO queryDTO) {
@@ -93,6 +109,29 @@ public class CustomerServiceImpl implements CustomerService {
         detail.setTagNames(customerTagMapper.selectTagNamesByCustomerId(id));
         log.debug("Customer detail query finished, id={}", id);
         return detail;
+    }
+
+    @Override
+    public CustomerProfileVO profile(Long id) {
+        CustomerProfileVO profile = new CustomerProfileVO();
+        profile.setCustomer(detail(id));
+        profile.setRecentFollows(limitList(followRecordMapper.selectByCustomerId(id), 5));
+        profile.setRecentNotes(limitList(noteMapper.selectByCustomerId(id), 5));
+        profile.setCompetitorFocuses(limitList(customerCompetitorFocusMapper.selectByCustomerId(id), 5));
+        profile.setAssignLogs(limitList(customerAssignLogMapper.selectList(new LambdaQueryWrapper<CustomerAssignLog>()
+                .eq(CustomerAssignLog::getCustomerId, id)
+                .orderByDesc(CustomerAssignLog::getCreatedAt)).stream()
+                .map(this::toAssignLogVO)
+                .collect(Collectors.toList()), 5));
+        profile.setHeat(heatMapper.selectLatestHeat(id));
+
+        TaskQueryDTO taskQueryDTO = new TaskQueryDTO();
+        taskQueryDTO.setCustomerId(id);
+        taskQueryDTO.setPageNum(1);
+        taskQueryDTO.setPageSize(5);
+        PageResult<TaskVO> taskPage = taskService.page(taskQueryDTO);
+        profile.setRecentTasks(taskPage.getList());
+        return profile;
     }
 
     @Override
@@ -292,6 +331,13 @@ public class CustomerServiceImpl implements CustomerService {
 
     private String nullToEmpty(String value) {
         return value == null ? "" : value;
+    }
+
+    private <T> List<T> limitList(List<T> list, int limit) {
+        if (list == null || list.size() <= limit) {
+            return list;
+        }
+        return list.subList(0, limit);
     }
 
     private List<CustomerExcelImportRowVO> parseExcelRows(Long sourceFileId) {

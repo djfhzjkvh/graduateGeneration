@@ -19,7 +19,11 @@ public interface FileService {
 
     String readAudioAsBase64(Long id);
 
+    String readAudioAsDataUrl(Long id);
+
     String resolveAudioFormat(Long id);
+
+    String readSpreadsheetAsText(Long id);
 
     File resolveLocalFile(Long id);
 }

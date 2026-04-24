@@ -1,20 +1,27 @@
 package com.graduation.crm.modules.ai.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graduation.crm.common.exception.BusinessException;
+import com.graduation.crm.common.result.PageResult;
+import com.graduation.crm.modules.admin.entity.SysOperLog;
+import com.graduation.crm.modules.admin.mapper.SysOperLogMapper;
 import com.graduation.crm.modules.ai.client.QwenAiClient;
 import com.graduation.crm.modules.ai.dto.AiAudioInputDTO;
 import com.graduation.crm.modules.ai.dto.AiChatDTO;
 import com.graduation.crm.modules.ai.dto.LeadConfirmDTO;
 import com.graduation.crm.modules.ai.dto.LeadExtractDTO;
+import com.graduation.crm.modules.ai.dto.LeadExtractRecordQueryDTO;
 import com.graduation.crm.modules.ai.dto.ScriptGenerateDTO;
 import com.graduation.crm.modules.ai.entity.LeadExtractRecord;
 import com.graduation.crm.modules.ai.mapper.LeadExtractRecordMapper;
 import com.graduation.crm.modules.ai.service.AiService;
 import com.graduation.crm.modules.ai.vo.AiChatVO;
 import com.graduation.crm.modules.ai.vo.LeadExtractVO;
+import com.graduation.crm.modules.ai.vo.LeadExtractRecordVO;
 import com.graduation.crm.modules.ai.vo.ScriptGenerateVO;
 import com.graduation.crm.modules.customer.service.CustomerService;
 import com.graduation.crm.modules.customer.vo.CustomerDetailVO;
@@ -40,6 +47,7 @@ public class AiServiceImpl implements AiService {
     private final LeadExtractRecordMapper leadExtractRecordMapper;
     private final ObjectMapper objectMapper;
     private final FileService fileService;
+    private final SysOperLogMapper sysOperLogMapper;
 
     @Override
     public AiChatVO chat(AiChatDTO dto) {
@@ -69,9 +77,10 @@ public class AiServiceImpl implements AiService {
 
     @Override
     public LeadExtractVO extractLead(LeadExtractDTO dto) {
+        String extractedText = resolveSpreadsheetText(dto);
         AiChatDTO chatDTO = new AiChatDTO();
         chatDTO.setBizType("LEAD_EXTRACT");
-        chatDTO.setPrompt(buildLeadExtractPrompt(dto));
+        chatDTO.setPrompt(buildLeadExtractPrompt(dto, extractedText));
         chatDTO.setImageUrls(resolveImageInputs(dto));
         chatDTO.setAudios(resolveAudioInputs(dto));
         AiChatVO chatVO = qwenAiClient.chat(chatDTO);
@@ -83,7 +92,7 @@ public class AiServiceImpl implements AiService {
         record.setSourceType(dto.getSourceType());
         record.setSourceFileId(dto.getSourceFileId());
         record.setRawText(dto.getRawText());
-        record.setCleanedText(dto.getRawText());
+        record.setCleanedText(extractedText != null ? extractedText : dto.getRawText());
         record.setExtractJson(toJson(vo));
         record.setSuggestionJson(toJson(Collections.singletonMap("suggestion", vo.getSuggestion())));
         record.setConfirmStatus("PENDING");
@@ -110,7 +119,30 @@ public class AiServiceImpl implements AiService {
         record.setConfirmStatus("CONFIRMED");
         record.setCustomerId(customerId);
         leadExtractRecordMapper.updateById(record);
+        saveOperLog(dto.getCustomerForm().getCreatedBy(), customerId, "AI_LEAD_CONFIRM",
+                "确认AI线索抽取记录，extractId=" + dto.getExtractId());
         return customerId;
+    }
+
+    @Override
+    public PageResult<LeadExtractRecordVO> pageLeadExtractRecords(LeadExtractRecordQueryDTO queryDTO) {
+        Page<LeadExtractRecord> page = new Page<>(queryDTO.getPageNum(), queryDTO.getPageSize());
+        LambdaQueryWrapper<LeadExtractRecord> wrapper = new LambdaQueryWrapper<LeadExtractRecord>()
+                .orderByDesc(LeadExtractRecord::getCreatedAt);
+        if (queryDTO.getSourceType() != null && !queryDTO.getSourceType().trim().isEmpty()) {
+            wrapper.eq(LeadExtractRecord::getSourceType, queryDTO.getSourceType());
+        }
+        if (queryDTO.getConfirmStatus() != null && !queryDTO.getConfirmStatus().trim().isEmpty()) {
+            wrapper.eq(LeadExtractRecord::getConfirmStatus, queryDTO.getConfirmStatus());
+        }
+        if (queryDTO.getCreatedBy() != null) {
+            wrapper.eq(LeadExtractRecord::getCreatedBy, queryDTO.getCreatedBy());
+        }
+        IPage<LeadExtractRecord> result = leadExtractRecordMapper.selectPage(page, wrapper);
+        List<LeadExtractRecordVO> list = result.getRecords().stream()
+                .map(this::toLeadExtractRecordVO)
+                .collect(java.util.stream.Collectors.toList());
+        return PageResult.of(list, result.getTotal(), queryDTO.getPageNum(), queryDTO.getPageSize());
     }
 
     private List<String> resolveImageInputs(LeadExtractDTO dto) {
@@ -137,12 +169,24 @@ public class AiServiceImpl implements AiService {
             SysFile file = fileService.getEntity(dto.getSourceFileId());
             if (file.getFileType() != null && file.getFileType().startsWith("audio/")) {
                 AiAudioInputDTO audio = new AiAudioInputDTO();
-                audio.setData(fileService.readAudioAsBase64(dto.getSourceFileId()));
+                audio.setData(fileService.readAudioAsDataUrl(dto.getSourceFileId()));
                 audio.setFormat(fileService.resolveAudioFormat(dto.getSourceFileId()));
                 audios.add(audio);
             }
         }
         return audios.isEmpty() ? null : audios;
+    }
+
+    private String resolveSpreadsheetText(LeadExtractDTO dto) {
+        if (dto.getSourceFileId() == null) {
+            return null;
+        }
+        SysFile file = fileService.getEntity(dto.getSourceFileId());
+        String fileName = file.getFileName() == null ? "" : file.getFileName().toLowerCase();
+        if (!fileName.endsWith(".xlsx") && !fileName.endsWith(".xls") && !fileName.endsWith(".csv")) {
+            return null;
+        }
+        return fileService.readSpreadsheetAsText(dto.getSourceFileId());
     }
 
     private String buildScriptPrompt(ScriptGenerateDTO dto, CustomerDetailVO customer) {
@@ -165,14 +209,16 @@ public class AiServiceImpl implements AiService {
         return prompt.toString();
     }
 
-    private String buildLeadExtractPrompt(LeadExtractDTO dto) {
+    private String buildLeadExtractPrompt(LeadExtractDTO dto, String extractedText) {
         StringBuilder prompt = new StringBuilder();
         prompt.append("你是房地产客户线索信息抽取助手。请从输入的聊天文本、图片或音频中抽取购房客户信息。");
         prompt.append("只返回 JSON，不要返回 Markdown，不要解释。字段固定为：");
         prompt.append("customerName,mobile,gender,source,intentLevel,budgetMin,budgetMax,region,houseType,purpose,visitTime,remark,suggestion。");
         prompt.append("无法确定的字段返回 null。intentLevel 只能是 LOW、MEDIUM、HIGH。预算单位统一为元。");
         prompt.append("\n来源类型：").append(dto.getSourceType());
-        if (dto.getRawText() != null && !dto.getRawText().trim().isEmpty()) {
+        if (extractedText != null && !extractedText.trim().isEmpty()) {
+            prompt.append("\n待抽取表格内容：").append(extractedText);
+        } else if (dto.getRawText() != null && !dto.getRawText().trim().isEmpty()) {
             prompt.append("\n待抽取文本：").append(dto.getRawText());
         } else {
             prompt.append("\n请根据随请求提供的图片或音频内容抽取字段。");
@@ -242,5 +288,22 @@ public class AiServiceImpl implements AiService {
         } catch (Exception e) {
             return "{}";
         }
+    }
+
+    private LeadExtractRecordVO toLeadExtractRecordVO(LeadExtractRecord entity) {
+        LeadExtractRecordVO vo = new LeadExtractRecordVO();
+        org.springframework.beans.BeanUtils.copyProperties(entity, vo);
+        return vo;
+    }
+
+    private void saveOperLog(Long userId, Long bizId, String action, String content) {
+        SysOperLog log = new SysOperLog();
+        log.setUserId(userId);
+        log.setBizType("AI_LEAD");
+        log.setBizId(bizId);
+        log.setAction(action);
+        log.setContent(content);
+        log.setCreatedAt(java.time.LocalDateTime.now());
+        sysOperLogMapper.insert(log);
     }
 }

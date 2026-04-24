@@ -14,12 +14,15 @@ import com.graduation.crm.modules.customer.vo.CustomerDetailVO;
 import com.graduation.crm.modules.customer.vo.CustomerExcelImportPreviewVO;
 import com.graduation.crm.modules.customer.vo.CustomerExcelImportResultVO;
 import com.graduation.crm.modules.customer.vo.CustomerListVO;
+import com.graduation.crm.modules.customer.vo.CustomerProfileVO;
 
 public interface CustomerService {
 
     PageResult<CustomerListVO> page(CustomerQueryDTO queryDTO);
 
     CustomerDetailVO detail(Long id);
+
+    CustomerProfileVO profile(Long id);
 
     Long create(CustomerCreateDTO dto);
 

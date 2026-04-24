@@ -44,6 +44,15 @@
       }
     },
     {
+      "path": "pages/customer/high-intent",
+      "style": {
+        "navigationBarTitleText": "高意向客户池",
+        "navigationBarBackgroundColor": "#ffffff",
+        "navigationBarTextStyle": "black",
+        "enablePullDownRefresh": true
+      }
+    },
+    {
       "path": "pages/follow/form",
       "style": {
         "navigationBarTitleText": "记录跟进",
@@ -64,6 +73,22 @@
       "path": "pages/ai/script",
       "style": {
         "navigationBarTitleText": "AI跟进话术",
+        "navigationBarBackgroundColor": "#ffffff",
+        "navigationBarTextStyle": "black"
+      }
+    },
+    {
+      "path": "pages/ai/lead",
+      "style": {
+        "navigationBarTitleText": "AI线索录入",
+        "navigationBarBackgroundColor": "#ffffff",
+        "navigationBarTextStyle": "black"
+      }
+    },
+    {
+      "path": "pages/ai/chat",
+      "style": {
+        "navigationBarTitleText": "AI助手",
         "navigationBarBackgroundColor": "#ffffff",
         "navigationBarTextStyle": "black"
       }

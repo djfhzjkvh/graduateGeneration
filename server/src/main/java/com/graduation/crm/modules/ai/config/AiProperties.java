@@ -13,6 +13,7 @@ public class AiProperties {
 
     private String provider;
     private String modelName;
+    private String audioModelName;
     private String baseUrl;
     private String apiKey;
     private BigDecimal temperature = new BigDecimal("0.7");
@@ -21,4 +22,3 @@ public class AiProperties {
     private Integer timeoutSeconds = 60;
     private Boolean saveCallLog = true;
 }
-

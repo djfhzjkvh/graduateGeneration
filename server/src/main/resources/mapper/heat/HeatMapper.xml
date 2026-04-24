@@ -69,7 +69,7 @@
         LEFT JOIN sys_user advisor ON c.advisor_id = advisor.id
         LEFT JOIN sys_user manager ON c.manager_id = manager.id
         WHERE c.deleted = 0
-          AND c.heat_score &gt;= 80
+          AND c.heat_score &gt;= #{threshold}
         <if test="advisorId != null">
             AND c.advisor_id = #{advisorId}
         </if>

@@ -46,6 +46,11 @@ public class QwenAiClient {
         validateApiKey();
 
         Map<String, Object> request = buildRequest(dto);
+        if (hasAudioInput(dto)) {
+            request.put("model", resolveAudioModelName());
+            request.put("stream", true);
+            return chatByCollectingStream(dto, request);
+        }
         String requestJson = toJson(request);
         try {
             HttpHeaders headers = new HttpHeaders();
@@ -73,6 +78,58 @@ public class QwenAiClient {
         worker.setDaemon(true);
         worker.start();
         return emitter;
+    }
+
+    private AiChatVO chatByCollectingStream(AiChatDTO dto, Map<String, Object> request) {
+        String requestJson = toJson(request);
+        String modelName = String.valueOf(request.get("model"));
+        StringBuilder fullContent = new StringBuilder();
+        Integer tokenUsage = null;
+        try {
+            HttpURLConnection connection = openStreamConnection(requestJson);
+            int status = connection.getResponseCode();
+            InputStream responseStream = status >= 200 && status < 300
+                    ? connection.getInputStream()
+                    : connection.getErrorStream();
+
+            if (status < 200 || status >= 300) {
+                String errorBody = readAll(responseStream);
+                aiLogService.saveFailed(resolveBizType(dto), dto.getBizId(), modelName, requestJson, errorBody);
+                throw new BusinessException("AI调用失败：" + errorBody);
+            }
+
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(responseStream, StandardCharsets.UTF_8))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    if (!line.startsWith("data:")) {
+                        continue;
+                    }
+                    String payload = line.substring(5).trim();
+                    if ("[DONE]".equals(payload)) {
+                        break;
+                    }
+                    StreamChunk chunk = parseStreamChunk(payload);
+                    if (chunk.content != null) {
+                        fullContent.append(chunk.content);
+                    }
+                    if (chunk.tokenUsage != null) {
+                        tokenUsage = chunk.tokenUsage;
+                    }
+                }
+            }
+
+            AiChatVO vo = new AiChatVO();
+            vo.setContent(fullContent.toString());
+            vo.setModelName(modelName);
+            vo.setTokenUsage(tokenUsage);
+            aiLogService.saveSuccess(resolveBizType(dto), dto.getBizId(), modelName, requestJson, toJson(vo), tokenUsage);
+            return vo;
+        } catch (BusinessException e) {
+            throw e;
+        } catch (Exception e) {
+            aiLogService.saveFailed(resolveBizType(dto), dto.getBizId(), modelName, requestJson, e.getMessage());
+            throw new BusinessException("AI调用失败：" + e.getMessage());
+        }
     }
 
     private void streamChat(AiChatDTO dto, SseEmitter emitter) {
@@ -261,6 +318,17 @@ public class QwenAiClient {
 
     private String resolveBizType(AiChatDTO dto) {
         return dto.getBizType() == null ? "AI_CHAT" : dto.getBizType();
+    }
+
+    private boolean hasAudioInput(AiChatDTO dto) {
+        return dto.getAudios() != null && !dto.getAudios().isEmpty();
+    }
+
+    private String resolveAudioModelName() {
+        String audioModelName = aiProperties.getAudioModelName();
+        return audioModelName == null || audioModelName.trim().isEmpty()
+                ? aiProperties.getModelName()
+                : audioModelName;
     }
 
     private void validateApiKey() {

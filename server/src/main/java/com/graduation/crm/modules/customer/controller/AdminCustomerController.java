@@ -8,14 +8,19 @@ import com.graduation.crm.modules.customer.dto.CustomerExcelImportConfirmDTO;
 import com.graduation.crm.modules.customer.dto.CustomerExcelImportPreviewDTO;
 import com.graduation.crm.modules.customer.dto.CustomerQueryDTO;
 import com.graduation.crm.modules.customer.dto.CustomerStatusUpdateDTO;
+import com.graduation.crm.modules.customer.service.CustomerExcelTemplateService;
 import com.graduation.crm.modules.customer.service.CustomerService;
 import com.graduation.crm.modules.customer.vo.CustomerAssignLogVO;
 import com.graduation.crm.modules.customer.vo.CustomerExcelImportPreviewVO;
 import com.graduation.crm.modules.customer.vo.CustomerExcelImportResultVO;
 import com.graduation.crm.modules.customer.vo.CustomerListVO;
+import com.graduation.crm.modules.customer.vo.CustomerProfileVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -25,6 +30,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
+import javax.servlet.http.HttpServletResponse;
+import java.net.URLEncoder;
 
 /**
  * 管理端客户接口。
@@ -38,6 +45,7 @@ import javax.validation.Valid;
 public class AdminCustomerController {
 
     private final CustomerService customerService;
+    private final CustomerExcelTemplateService customerExcelTemplateService;
 
     /**
      * 管理端客户分页查询，比移动端更偏向全局检索和团队维度筛选。
@@ -46,6 +54,29 @@ public class AdminCustomerController {
     @Operation(summary = "分页查询客户")
     public Result<PageResult<CustomerListVO>> page(CustomerQueryDTO queryDTO) {
         return Result.success(customerService.page(queryDTO));
+    }
+
+    /**
+     * 查询客户画像，聚合客户基础信息、跟进、任务、AI复盘、竞品、分配日志和热度。
+     */
+    @GetMapping("/{id}/profile")
+    @Operation(summary = "客户画像")
+    public Result<CustomerProfileVO> profile(@PathVariable Long id) {
+        return Result.success(customerService.profile(id));
+    }
+
+    /**
+     * 下载客户 Excel 导入模板，便于管理端批量录入标准化数据。
+     */
+    @GetMapping("/import/excel/template")
+    @Operation(summary = "Excel客户导入模板")
+    public void downloadExcelTemplate(HttpServletResponse response) throws Exception {
+        String fileName = URLEncoder.encode("客户导入模板.xlsx", "UTF-8").replace("+", "%20");
+        response.setContentType(MediaType.APPLICATION_OCTET_STREAM_VALUE);
+        response.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + fileName);
+        try (XSSFWorkbook workbook = customerExcelTemplateService.buildImportTemplate()) {
+            workbook.write(response.getOutputStream());
+        }
     }
 
     /**

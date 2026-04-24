@@ -29,7 +29,7 @@
         SELECT COUNT(*)
         FROM crm_customer
         WHERE deleted = 0
-          AND heat_score &gt;= 80
+          AND heat_score &gt;= #{threshold}
         <if test="advisorId != null">
           AND advisor_id = #{advisorId}
         </if>
@@ -113,7 +113,7 @@
         FROM crm_customer c
         LEFT JOIN sys_user u ON c.advisor_id = u.id
         WHERE c.deleted = 0
-          AND c.heat_score &gt;= 80
+          AND c.heat_score &gt;= #{threshold}
         <if test="advisorId != null">
           AND c.advisor_id = #{advisorId}
         </if>
@@ -129,7 +129,7 @@
             u.id AS advisor_id,
             u.nickname AS advisor_name,
             COUNT(DISTINCT c.id) AS customer_count,
-            COUNT(DISTINCT CASE WHEN c.heat_score &gt;= 80 THEN c.id END) AS high_intent_customer_count,
+            COUNT(DISTINCT CASE WHEN c.heat_score &gt;= #{threshold} THEN c.id END) AS high_intent_customer_count,
             COUNT(DISTINCT CASE WHEN t.status = 'PENDING' THEN t.id END) AS pending_task_count,
             COUNT(DISTINCT CASE WHEN c.status = 'DEAL' THEN c.id END) AS deal_customer_count
         FROM sys_user u
@@ -166,4 +166,3 @@
         ORDER BY count DESC
     </select>
 </mapper>
-

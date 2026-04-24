@@ -1,18 +1,22 @@
 package com.graduation.crm.modules.ai.controller;
 
+import com.graduation.crm.common.result.PageResult;
 import com.graduation.crm.common.result.Result;
 import com.graduation.crm.modules.ai.dto.AiChatDTO;
 import com.graduation.crm.modules.ai.dto.LeadConfirmDTO;
 import com.graduation.crm.modules.ai.dto.LeadExtractDTO;
+import com.graduation.crm.modules.ai.dto.LeadExtractRecordQueryDTO;
 import com.graduation.crm.modules.ai.dto.ScriptGenerateDTO;
 import com.graduation.crm.modules.ai.service.AiService;
 import com.graduation.crm.modules.ai.vo.AiChatVO;
 import com.graduation.crm.modules.ai.vo.LeadExtractVO;
+import com.graduation.crm.modules.ai.vo.LeadExtractRecordVO;
 import com.graduation.crm.modules.ai.vo.ScriptGenerateVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -69,5 +73,14 @@ public class AppAiController {
     @Operation(summary = "确认线索入库")
     public Result<Long> confirmLead(@RequestBody @Valid LeadConfirmDTO dto) {
         return Result.success(aiService.confirmLead(dto));
+    }
+
+    /**
+     * 查询移动端当前顾问的智能录入历史。
+     */
+    @GetMapping("/leads/extract-records")
+    @Operation(summary = "智能录入历史")
+    public Result<PageResult<LeadExtractRecordVO>> extractRecords(LeadExtractRecordQueryDTO queryDTO) {
+        return Result.success(aiService.pageLeadExtractRecords(queryDTO));
     }
 }

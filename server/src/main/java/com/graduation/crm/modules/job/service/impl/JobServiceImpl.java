@@ -2,6 +2,7 @@ package com.graduation.crm.modules.job.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.graduation.crm.modules.admin.service.SystemConfigService;
 import com.graduation.crm.modules.customer.entity.Customer;
 import com.graduation.crm.modules.customer.mapper.CustomerMapper;
 import com.graduation.crm.modules.job.service.JobService;
@@ -48,6 +49,7 @@ public class JobServiceImpl implements JobService {
     private final CustomerMapper customerMapper;
     private final MessageMapper messageMapper;
     private final ReportDailyStatMapper reportDailyStatMapper;
+    private final SystemConfigService systemConfigService;
 
     /**
      * 自动刷新逾期任务：将今天之前仍未完成的待办任务标记为 OVERDUE，并生成站内提醒。
@@ -202,6 +204,7 @@ public class JobServiceImpl implements JobService {
     }
 
     private Task buildFollowTask(Customer customer, LocalDate taskDate) {
+        Integer highIntentThreshold = systemConfigService.getHighIntentThreshold();
         Task task = new Task();
         task.setCustomerId(customer.getId());
         task.setTaskType(TASK_TYPE_FOLLOW);
@@ -210,7 +213,7 @@ public class JobServiceImpl implements JobService {
         task.setTaskDate(taskDate);
         task.setTaskTime(customer.getNextFollowTime().toLocalTime());
         task.setStatus(STATUS_PENDING);
-        task.setPriority(customer.getHeatScore() != null && customer.getHeatScore() >= 80 ? "HIGH" : "MEDIUM");
+        task.setPriority(isHighIntent(customer, highIntentThreshold) ? "HIGH" : "MEDIUM");
         task.setOwnerId(customer.getAdvisorId());
         task.setSourceType(SOURCE_CUSTOMER_NEXT_FOLLOW);
         task.setSourceId(customer.getId());
@@ -259,15 +262,16 @@ public class JobServiceImpl implements JobService {
     }
 
     private ReportDailyStat buildDailyStat(LocalDate today, Long userId, List<Customer> customers, List<Task> tasks) {
+        Integer highIntentThreshold = systemConfigService.getHighIntentThreshold();
         ReportDailyStat stat = new ReportDailyStat();
         stat.setStatDate(today);
         stat.setUserId(userId);
         stat.setDeptId(resolveDeptId(customers));
         stat.setNewCustomerCount(countNewCustomers(today, customers));
-        stat.setHighIntentCount(countHighIntentCustomers(customers));
+        stat.setHighIntentCount(countHighIntentCustomers(customers, highIntentThreshold));
         stat.setPendingTaskCount(countTasksByStatus(tasks, STATUS_PENDING));
         stat.setForgetTaskCount(countTasksByStatus(tasks, STATUS_OVERDUE));
-        stat.setExpectedAmount(sumExpectedAmount(customers));
+        stat.setExpectedAmount(sumExpectedAmount(customers, highIntentThreshold));
         stat.setCreatedAt(LocalDateTime.now());
         return stat;
     }
@@ -287,9 +291,9 @@ public class JobServiceImpl implements JobService {
                 .count();
     }
 
-    private Integer countHighIntentCustomers(List<Customer> customers) {
+    private Integer countHighIntentCustomers(List<Customer> customers, Integer highIntentThreshold) {
         return (int) customers.stream()
-                .filter(customer -> customer.getHeatScore() != null && customer.getHeatScore() >= 80)
+                .filter(customer -> isHighIntent(customer, highIntentThreshold))
                 .count();
     }
 
@@ -299,11 +303,15 @@ public class JobServiceImpl implements JobService {
                 .count();
     }
 
-    private BigDecimal sumExpectedAmount(List<Customer> customers) {
+    private BigDecimal sumExpectedAmount(List<Customer> customers, Integer highIntentThreshold) {
         return customers.stream()
-                .filter(customer -> customer.getHeatScore() != null && customer.getHeatScore() >= 80)
+                .filter(customer -> isHighIntent(customer, highIntentThreshold))
                 .map(Customer::getBudgetMax)
                 .filter(amount -> amount != null)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    private boolean isHighIntent(Customer customer, Integer highIntentThreshold) {
+        return customer.getHeatScore() != null && customer.getHeatScore() >= highIntentThreshold;
     }
 }

@@ -28,6 +28,7 @@ logging:
 ai:
   provider: qwen
   model-name: qwen3.5-omni-plus
+  audio-model-name: qwen-omni-turbo
   base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
   api-key: ${QWEN_API_KEY:}
   temperature: 0.7
@@ -39,6 +40,9 @@ ai:
 file:
   upload-dir: ${FILE_UPLOAD_DIR:D:/Develop/code/graduateGeneration/upload}
   access-prefix: /uploads
+
+security:
+  enabled: ${SECURITY_ENABLED:false}
 
 springdoc:
   api-docs:

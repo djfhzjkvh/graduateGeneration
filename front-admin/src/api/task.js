@@ -11,7 +11,9 @@ export const taskApi = {
   transferLogs: (params) => request.get('/admin/tasks/transfer-logs', { params }),
   taskTransferLogs: (taskId, params) => request.get(`/admin/tasks/${taskId}/transfer-logs`, { params }),
   transfer: (id, data) => request.put(`/admin/tasks/${id}/transfer`, data),
+  complete: (id) => request.put(`/app/tasks/${id}/complete`),
+  delay: (id, data) => request.put(`/app/tasks/${id}/delay`, data),
+  create: (data) => request.post('/app/tasks', data),
 
   // TODO: 以下接口后端待补充
-  // complete: (id) => request.put(`/admin/tasks/${id}/complete`),
 }

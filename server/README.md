@@ -47,8 +47,10 @@ graduate_generation
 - `POST /api/app/ai/scripts/generate`
 - `POST /api/app/ai/leads/extract`
 - `POST /api/app/ai/leads/confirm`
+- `GET /api/app/ai/leads/extract-records`
 - `GET /api/app/customers`
 - `GET /api/app/customers/{id}`
+- `GET /api/app/customers/{id}/profile`
 - `POST /api/app/customers`
 - `PUT /api/app/customers/{id}`
 - `PUT /api/app/customers/{id}/status`
@@ -79,6 +81,8 @@ graduate_generation
 - `POST /api/app/competitors/ai-response`
 - `GET /api/app/customers/{customerId}/competitor-history`
 - `GET /api/admin/customers`
+- `GET /api/admin/customers/{id}/profile`
+- `GET /api/admin/customers/import/excel/template`
 - `POST /api/admin/customers/import/excel/preview`
 - `POST /api/admin/customers/import/excel/confirm`
 - `PUT /api/admin/customers/{id}/assign`
@@ -129,6 +133,7 @@ graduate_generation
 - `GET /api/admin/configs`
 - `PUT /api/admin/configs/{key}`
 - `GET /api/admin/ai/config`
+- `GET /api/admin/ai/leads/extract-records`
 - `PUT /api/admin/ai/config`
 - `GET /api/admin/logs/ai`
 - `GET /api/admin/logs/operation`

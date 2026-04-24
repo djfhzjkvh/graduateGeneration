@@ -48,6 +48,9 @@
       <div class="table-toolbar">
         <span class="table-title">任务列表</span>
         <span class="table-count">共 {{ total }} 条</span>
+        <div class="toolbar-actions">
+          <el-button size="small" type="primary" @click="openCreate">新增任务</el-button>
+        </div>
       </div>
 
       <el-table :data="tableData" v-loading="loading">
@@ -78,10 +81,12 @@
             <span :class="['badge', getBadgeClass(TASK_STATUS, row.status)]">{{ getLabel(TASK_STATUS, row.status) }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="155" fixed="right">
+        <el-table-column label="操作" width="220" fixed="right">
           <template #default="{ row }">
             <el-button size="small" link @click="openDetail(row)">详情</el-button>
             <el-button size="small" link type="primary" @click="openTransfer(row)">转派</el-button>
+            <el-button size="small" link type="success" :disabled="row.status === 'DONE'" @click="completeTask(row)">完成</el-button>
+            <el-button size="small" link type="warning" :disabled="row.status === 'DONE'" @click="openDelay(row)">延期</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -109,7 +114,11 @@
               <span :class="['badge', getBadgeClass(TASK_TYPE, cur.taskType)]">{{ getLabel(TASK_TYPE, cur.taskType) }}</span>
             </div>
           </div>
-          <el-button size="small" type="primary" @click="openTransfer(cur)">转派任务</el-button>
+          <div class="task-head-actions">
+            <el-button size="small" type="primary" @click="openTransfer(cur)">转派任务</el-button>
+            <el-button size="small" type="success" :disabled="cur.status === 'DONE'" @click="completeTask(cur)">完成</el-button>
+            <el-button size="small" :disabled="cur.status === 'DONE'" @click="openDelay(cur)">延期</el-button>
+          </div>
         </div>
 
         <el-tabs v-model="detailTab">
@@ -167,14 +176,77 @@
         <el-button type="primary" :loading="transferDialog.saving" @click="submitTransfer">确认转派</el-button>
       </template>
     </el-dialog>
+
+    <el-dialog v-model="createDialog.visible" title="新增任务" width="560px">
+      <el-form :model="createForm" label-width="90px">
+        <el-form-item label="关联客户">
+          <el-select v-model="createForm.customerId" filterable clearable placeholder="选择客户" style="width:100%">
+            <el-option v-for="c in customers" :key="c.id" :label="displayCustomer(c)" :value="c.id" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="负责人">
+          <el-select v-model="createForm.ownerId" filterable placeholder="选择负责人" style="width:100%">
+            <el-option v-for="u in users" :key="u.id" :label="displayUser(u)" :value="u.id" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="任务类型">
+          <el-select v-model="createForm.taskType" style="width:100%">
+            <el-option v-for="item in TASK_TYPE" :key="item.value" :label="item.label" :value="item.value" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="优先级">
+          <el-select v-model="createForm.priority" style="width:100%">
+            <el-option v-for="item in TASK_PRIORITY" :key="item.value" :label="item.label" :value="item.value" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="任务标题">
+          <el-input v-model="createForm.title" placeholder="例如：邀约客户到访" />
+        </el-form-item>
+        <el-form-item label="任务日期">
+          <el-date-picker v-model="createForm.taskDate" type="date" value-format="YYYY-MM-DD" placeholder="选择任务日期" style="width:100%" />
+        </el-form-item>
+        <el-form-item label="任务时间">
+          <el-time-picker v-model="createForm.taskTime" value-format="HH:mm:ss" format="HH:mm" placeholder="选择任务时间" style="width:100%" />
+        </el-form-item>
+        <el-form-item label="任务内容">
+          <el-input v-model="createForm.content" type="textarea" :rows="3" placeholder="补充任务说明" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="createDialog.visible = false">取消</el-button>
+        <el-button type="primary" :loading="createDialog.saving" @click="submitCreate">保存任务</el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog v-model="delayDialog.visible" title="任务延期" width="460px">
+      <el-form :model="delayForm" label-width="90px">
+        <el-form-item label="任务">
+          <el-input :model-value="delayDialog.task?.title" disabled />
+        </el-form-item>
+        <el-form-item label="新日期">
+          <el-date-picker v-model="delayForm.newTaskDate" type="date" value-format="YYYY-MM-DD" placeholder="选择新的任务日期" style="width:100%" />
+        </el-form-item>
+        <el-form-item label="新时间">
+          <el-time-picker v-model="delayForm.newTaskTime" value-format="HH:mm:ss" format="HH:mm" placeholder="选择新的任务时间" style="width:100%" />
+        </el-form-item>
+        <el-form-item label="延期原因">
+          <el-input v-model="delayForm.reason" type="textarea" :rows="3" maxlength="120" show-word-limit placeholder="说明延期原因" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="delayDialog.visible = false">取消</el-button>
+        <el-button type="primary" :loading="delayDialog.saving" @click="submitDelay">确认延期</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { taskApi } from '@/api/task'
 import { userApi } from '@/api/user'
+import { customerApi } from '@/api/customer'
 import { useAuthStore } from '@/stores/auth'
 import { TASK_STATUS, TASK_PRIORITY, TASK_TYPE, getBadgeClass, getLabel } from '@/constants/dictionary'
 import { formatDate as formatDateTime } from '@/utils/format'
@@ -195,17 +267,34 @@ const cur = ref(null)
 const remindLogs = ref([])
 const transferLogs = ref([])
 const users = ref([])
+const customers = ref([])
 const taskStat = reactive({ pendingCount: 0, overdueCount: 0, doneCount: 0, delayedCount: 0 })
 
 const filters = reactive({ status: '', date: '' })
 const transferDialog = reactive({ visible: false, saving: false, task: null })
 const transferForm = reactive({ toUserId: null, reason: '' })
+const delayDialog = reactive({ visible: false, saving: false, task: null })
+const delayForm = reactive({ newTaskDate: '', newTaskTime: '', reason: '' })
+const createDialog = reactive({ visible: false, saving: false })
+const createForm = reactive({
+  customerId: null,
+  taskType: 'FOLLOW',
+  title: '',
+  content: '',
+  taskDate: '',
+  taskTime: '',
+  priority: 'MEDIUM',
+  ownerId: null,
+})
 
 function formatDate(t) {
   return formatDateTime(t)
 }
 function displayUser(user) {
   return `${user.nickname || user.username}${user.deptName ? ` / ${user.deptName}` : ''}`
+}
+function displayCustomer(customer) {
+  return `${customer.customerName}${customer.mobile ? ` / ${customer.mobile}` : ''}`
 }
 
 async function fetchData() {
@@ -233,6 +322,13 @@ async function fetchUsers() {
   try {
     const data = await userApi.page({ pageNum: 1, pageSize: 200, status: 1 })
     users.value = data?.list || []
+  } catch { /* non-critical */ }
+}
+
+async function fetchCustomers() {
+  try {
+    const data = await customerApi.page({ pageNum: 1, pageSize: 200 })
+    customers.value = data?.list || []
   } catch { /* non-critical */ }
 }
 
@@ -284,7 +380,89 @@ async function submitTransfer() {
   }
 }
 
-onMounted(() => { fetchData(); fetchStat(); fetchUsers() })
+function openCreate() {
+  createDialog.visible = true
+  Object.assign(createForm, {
+    customerId: null,
+    taskType: 'FOLLOW',
+    title: '',
+    content: '',
+    taskDate: '',
+    taskTime: '',
+    priority: 'MEDIUM',
+    ownerId: null,
+  })
+  if (!customers.value.length) fetchCustomers()
+  if (!users.value.length) fetchUsers()
+}
+
+async function submitCreate() {
+  if (!createForm.taskType) return ElMessage.warning('请选择任务类型')
+  if (!createForm.title) return ElMessage.warning('请填写任务标题')
+  if (!createForm.taskDate) return ElMessage.warning('请选择任务日期')
+  if (!createForm.ownerId) return ElMessage.warning('请选择负责人')
+  createDialog.saving = true
+  try {
+    const payload = cleanPayload(createForm, ['customerId', 'taskType', 'title', 'content', 'taskDate', 'taskTime', 'priority', 'ownerId'])
+    await taskApi.create(payload)
+    logBusiness('task', 'create', payload)
+    ElMessage.success('任务已创建')
+    createDialog.visible = false
+    await Promise.all([fetchData(), fetchStat()])
+  } catch (error) {
+    errorBusiness('task', 'create:failed', error)
+  } finally {
+    createDialog.saving = false
+  }
+}
+
+async function completeTask(row) {
+  await ElMessageBox.confirm(`确定将「${row.title}」标记为已完成吗？`, '完成确认', {
+    confirmButtonText: '确认完成',
+    cancelButtonText: '取消',
+    type: 'warning',
+  })
+  try {
+    await taskApi.complete(row.id)
+    logBusiness('task', 'complete', { id: row.id })
+    ElMessage.success('任务已完成')
+    await Promise.all([fetchData(), fetchStat()])
+    if (drawerVisible.value && cur.value?.id === row.id) await openDetail(row)
+  } catch (error) {
+    errorBusiness('task', 'complete:failed', error)
+  }
+}
+
+function openDelay(row) {
+  delayDialog.task = row
+  delayDialog.visible = true
+  Object.assign(delayForm, { newTaskDate: row.taskDate || '', newTaskTime: row.taskTime || '', reason: '' })
+}
+
+async function submitDelay() {
+  if (!delayForm.newTaskDate) return ElMessage.warning('请选择新的任务日期')
+  delayDialog.saving = true
+  try {
+    const task = delayDialog.task
+    const payload = cleanPayload({
+      newTaskDate: delayForm.newTaskDate,
+      newTaskTime: delayForm.newTaskTime,
+      reason: delayForm.reason,
+    }, ['newTaskDate', 'newTaskTime', 'reason'])
+    await taskApi.delay(task.id, payload)
+    logBusiness('task', 'delay', { id: task.id, ...payload })
+    ElMessage.success('任务已延期')
+    delayDialog.visible = false
+    await Promise.all([fetchData(), fetchStat()])
+    if (drawerVisible.value && cur.value?.id === task.id) await openDetail(task)
+  } catch (error) {
+    errorBusiness('task', 'delay:failed', error)
+  } finally {
+    delayDialog.saving = false
+  }
+}
+
+onMounted(() => { fetchData(); fetchStat(); fetchUsers(); fetchCustomers() })
 </script>
 
 <style scoped>
@@ -316,6 +494,7 @@ onMounted(() => { fetchData(); fetchStat(); fetchUsers() })
   padding-bottom: 14px;
   border-bottom: 1px solid var(--border-light);
 }
+.task-head-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
 .task-title { font-size: 16px; font-weight: 600; color: var(--text-900); }
 .task-tags { display: flex; gap: 6px; margin-top: 8px; }
 </style>

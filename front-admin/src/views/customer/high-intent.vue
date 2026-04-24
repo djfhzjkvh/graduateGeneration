@@ -2,7 +2,7 @@
   <div>
     <div class="page-header">
       <h1 class="page-title">高意向客户</h1>
-      <p class="page-desc">热度分 ≥ 70 或意向等级为「高」的客户，共 {{ total }} 位</p>
+      <p class="page-desc">热度分 ≥ {{ highIntentThreshold }} 的客户，共 {{ total }} 位</p>
     </div>
 
     <div class="table-card">
@@ -12,7 +12,7 @@
         <div class="toolbar-actions">
           <!-- TODO: 批量分配接口后端待补充 -->
           <el-button type="primary" size="small" disabled title="客户分配接口待接入">批量分配</el-button>
-          <el-button size="small" @click="handleBatchCalc" :loading="calcLoading">刷新热度</el-button>
+          <el-button size="small" @click="handleBatchCalc" :loading="calcLoading">重新计算热度</el-button>
         </div>
       </div>
 
@@ -85,9 +85,11 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import dayjs from 'dayjs'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { heatApi } from '@/api/heat'
+import { opsApi } from '@/api/ops'
 import { CUSTOMER_STATUS, INTENT_LEVEL, getBadgeClass, getLabel } from '@/constants/dictionary'
+import { logBusiness, errorBusiness } from '@/utils/logger'
 
 const loading = ref(false)
 const calcLoading = ref(false)
@@ -97,6 +99,7 @@ const currentPage = ref(1)
 const pageSize = ref(20)
 const drawerVisible = ref(false)
 const cur = ref(null)
+const highIntentThreshold = ref(80)
 
 const rows = computed(() => !cur.value ? [] : [
   { label: '意向等级', value: getLabel(INTENT_LEVEL, cur.value.intentLevel) },
@@ -129,12 +132,32 @@ async function fetchData() {
   }
 }
 
+async function fetchHighIntentThreshold() {
+  try {
+    const configs = await opsApi.configs({ configKey: 'heat.high.threshold' })
+    const value = Number(configs?.[0]?.configValue)
+    if (!Number.isNaN(value)) {
+      highIntentThreshold.value = value
+    }
+  } catch (error) {
+    errorBusiness('heat', 'threshold:fetch:failed', error)
+  }
+}
+
 async function handleBatchCalc() {
+  await ElMessageBox.confirm('确定重新计算全部客户热度分吗？计算完成后会刷新高意向客户列表。', '热度计算确认', {
+    confirmButtonText: '重新计算',
+    cancelButtonText: '取消',
+    type: 'warning',
+  })
   calcLoading.value = true
   try {
-    await heatApi.batchCalculate()
+    const result = await heatApi.batchCalculate()
+    logBusiness('heat', 'batch-calculate', result || {})
     ElMessage.success('热度分批量更新完成')
     fetchData()
+  } catch (error) {
+    errorBusiness('heat', 'batch-calculate:failed', error)
   } finally {
     calcLoading.value = false
   }
@@ -142,5 +165,8 @@ async function handleBatchCalc() {
 
 function openDetail(row) { cur.value = row; drawerVisible.value = true }
 
-onMounted(fetchData)
+onMounted(() => {
+  fetchHighIntentThreshold()
+  fetchData()
+})
 </script>

@@ -3,6 +3,7 @@ package com.graduation.crm.common.handler;
 import com.graduation.crm.common.exception.BusinessException;
 import com.graduation.crm.common.result.Result;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -43,6 +44,15 @@ public class GlobalExceptionHandler {
         log.warn("Request parameter type mismatch, name={}, value={}, requiredType={}",
                 e.getName(), e.getValue(), e.getRequiredType() == null ? null : e.getRequiredType().getSimpleName());
         return Result.fail(400, "请求参数格式错误");
+    }
+
+    /**
+     * 请求体 JSON 结构不符合 DTO 时返回明确提示，例如数组误传成对象。
+     */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public Result<Void> handleHttpMessageNotReadableException(HttpMessageNotReadableException e) {
+        log.warn("Request body parse failed: {}", e.getMessage());
+        return Result.fail(400, "请求体格式错误");
     }
 
     /**

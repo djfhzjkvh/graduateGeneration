@@ -34,6 +34,21 @@
         </view>
         <view v-else class="empty-log">暂无提醒记录</view>
       </view>
+
+      <view class="form-group">
+        <text class="form-group-title">转派记录</text>
+        <view v-if="transferLogs.length">
+          <view class="log-item" v-for="log in transferLogs" :key="log.id">
+            <view class="log-head">
+              <text class="log-type">{{ log.fromUserId || '--' }} → {{ log.toUserId || '--' }}</text>
+              <text class="log-status">转派</text>
+            </view>
+            <text class="log-time">{{ formatDate(log.createdAt, 'YYYY-MM-DD HH:mm') }}</text>
+            <text class="log-msg" v-if="log.reason">{{ log.reason }}</text>
+          </view>
+        </view>
+        <view v-else class="empty-log">暂无转派记录</view>
+      </view>
     </view>
     <EmptyState v-else icon="任" text="任务不存在或已被删除" />
 
@@ -88,6 +103,7 @@ import EmptyState from '../../components/EmptyState.vue'
 
 const task = ref(null)
 const remindLogs = ref([])
+const transferLogs = ref([])
 const delayVisible = ref(false)
 const delaying = ref(false)
 const delayForm = ref({ newTaskDate: '', newTaskTime: '', reason: '' })
@@ -114,11 +130,13 @@ async function fetchTask() {
     const data = await taskApi.detail(taskId)
     task.value = mapTask(data?.task || data || {})
     remindLogs.value = data?.remindLogs || []
+    transferLogs.value = data?.transferLogs || []
     console.info('[task-detail] task detail loaded', taskId)
   } catch (error) {
     console.warn('[task-detail] task detail load failed', error)
     task.value = null
     remindLogs.value = []
+    transferLogs.value = []
   }
 }
 

@@ -17,7 +17,9 @@ public interface DashboardMapper {
 
     Integer countOverdueTasks(@Param("ownerId") Long ownerId);
 
-    Integer countHighIntentCustomers(@Param("advisorId") Long advisorId, @Param("managerId") Long managerId);
+    Integer countHighIntentCustomers(@Param("advisorId") Long advisorId,
+                                     @Param("managerId") Long managerId,
+                                     @Param("threshold") Integer threshold);
 
     Integer countNewCustomers(@Param("advisorId") Long advisorId, @Param("managerId") Long managerId);
 
@@ -27,12 +29,14 @@ public interface DashboardMapper {
 
     List<SimpleTaskVO> selectTodayTasks(@Param("ownerId") Long ownerId, @Param("limit") Integer limit);
 
-    List<SimpleCustomerVO> selectHighIntentCustomers(@Param("advisorId") Long advisorId, @Param("managerId") Long managerId, @Param("limit") Integer limit);
+    List<SimpleCustomerVO> selectHighIntentCustomers(@Param("advisorId") Long advisorId,
+                                                     @Param("managerId") Long managerId,
+                                                     @Param("threshold") Integer threshold,
+                                                     @Param("limit") Integer limit);
 
-    List<AdvisorRankVO> selectAdvisorRank(@Param("managerId") Long managerId);
+    List<AdvisorRankVO> selectAdvisorRank(@Param("managerId") Long managerId, @Param("threshold") Integer threshold);
 
     List<DailyStatVO> selectDailyStats(@Param("limit") Integer limit);
 
     List<TaskStatusStatVO> selectTaskStatusStats();
 }
-

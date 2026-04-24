@@ -62,6 +62,7 @@ const menuItems = [
   { icon: '👤', label: '个人资料', action: () => uni.navigateTo({ url: '/pages/profile/index' }) },
   { icon: '👥', label: '我的客户', action: () => uni.switchTab({ url: '/pages/customer/list' }) },
   { icon: '📋', label: '我的任务', action: () => uni.switchTab({ url: '/pages/task/list' }) },
+  { icon: 'AI', label: 'AI线索录入', action: () => uni.navigateTo({ url: '/pages/ai/lead' }) },
   { icon: '🔔', label: '消息通知', action: () => uni.navigateTo({ url: '/pages/message/list' }) }
 ]
 

@@ -1,6 +1,7 @@
 package com.graduation.crm.modules.heat.service.impl;
 
 import com.graduation.crm.common.exception.BusinessException;
+import com.graduation.crm.modules.admin.service.SystemConfigService;
 import com.graduation.crm.modules.customer.entity.Customer;
 import com.graduation.crm.modules.customer.mapper.CustomerMapper;
 import com.graduation.crm.modules.heat.entity.CustomerHeatLog;
@@ -22,6 +23,7 @@ public class HeatServiceImpl implements HeatService {
 
     private final HeatMapper heatMapper;
     private final CustomerMapper customerMapper;
+    private final SystemConfigService systemConfigService;
 
     @Override
     public HeatDetailVO detail(Long customerId) {
@@ -92,7 +94,7 @@ public class HeatServiceImpl implements HeatService {
 
     @Override
     public List<HighIntentCustomerVO> highIntent(Long advisorId, Long managerId) {
-        return heatMapper.selectHighIntentCustomers(advisorId, managerId);
+        return heatMapper.selectHighIntentCustomers(advisorId, managerId, systemConfigService.getHighIntentThreshold());
     }
 
     private ScoreParts calculateScoreParts(Customer customer) {
@@ -147,7 +149,7 @@ public class HeatServiceImpl implements HeatService {
         if (vo.getScore() == null) {
             vo.setScore(0);
         }
-        if (vo.getScore() >= 80) {
+        if (vo.getScore() >= systemConfigService.getHighIntentThreshold()) {
             vo.setLevel("HIGH");
             vo.setSuggestion("建议优先跟进，尽快确认到访时间、优惠方案或经理协助。");
         } else if (vo.getScore() >= 50) {

@@ -9,6 +9,7 @@ import com.graduation.crm.modules.customer.dto.CustomerUpdateDTO;
 import com.graduation.crm.modules.customer.service.CustomerService;
 import com.graduation.crm.modules.customer.vo.CustomerDetailVO;
 import com.graduation.crm.modules.customer.vo.CustomerListVO;
+import com.graduation.crm.modules.customer.vo.CustomerProfileVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -54,6 +55,15 @@ public class AppCustomerController {
     @Operation(summary = "查询客户详情")
     public Result<CustomerDetailVO> detail(@PathVariable Long id) {
         return Result.success(customerService.detail(id));
+    }
+
+    /**
+     * 查询客户画像，移动端客户详情页可一次拿到该客户的核心上下文。
+     */
+    @GetMapping("/{id}/profile")
+    @Operation(summary = "客户画像")
+    public Result<CustomerProfileVO> profile(@PathVariable Long id) {
+        return Result.success(customerService.profile(id));
     }
 
     /**

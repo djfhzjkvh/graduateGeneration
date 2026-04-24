@@ -1,11 +1,14 @@
 package com.graduation.crm.modules.ai.service;
 
+import com.graduation.crm.common.result.PageResult;
 import com.graduation.crm.modules.ai.dto.AiChatDTO;
 import com.graduation.crm.modules.ai.dto.LeadConfirmDTO;
 import com.graduation.crm.modules.ai.dto.LeadExtractDTO;
+import com.graduation.crm.modules.ai.dto.LeadExtractRecordQueryDTO;
 import com.graduation.crm.modules.ai.dto.ScriptGenerateDTO;
 import com.graduation.crm.modules.ai.vo.AiChatVO;
 import com.graduation.crm.modules.ai.vo.LeadExtractVO;
+import com.graduation.crm.modules.ai.vo.LeadExtractRecordVO;
 import com.graduation.crm.modules.ai.vo.ScriptGenerateVO;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -20,4 +23,6 @@ public interface AiService {
     LeadExtractVO extractLead(LeadExtractDTO dto);
 
     Long confirmLead(LeadConfirmDTO dto);
+
+    PageResult<LeadExtractRecordVO> pageLeadExtractRecords(LeadExtractRecordQueryDTO queryDTO);
 }

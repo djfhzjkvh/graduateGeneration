@@ -17,7 +17,9 @@ public interface HeatMapper extends BaseMapper<CustomerHeatLog> {
 
     int upsertHeatLog(CustomerHeatLog log);
 
-    List<HighIntentCustomerVO> selectHighIntentCustomers(@Param("advisorId") Long advisorId, @Param("managerId") Long managerId);
+    List<HighIntentCustomerVO> selectHighIntentCustomers(@Param("advisorId") Long advisorId,
+                                                         @Param("managerId") Long managerId,
+                                                         @Param("threshold") Integer threshold);
 
     Integer countRecentFollows(@Param("customerId") Long customerId, @Param("days") Integer days);
 

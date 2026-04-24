@@ -43,7 +43,19 @@
         </button>
       </view>
 
-      <text class="hint">演示账号：admin / 123456，advisor_a / 123456</text>
+      <view class="role-tips">
+        <button
+          class="role-tip-btn"
+          v-for="item in accountTips"
+          :key="item.role"
+          :title="item.tip"
+          @tap="fillDemoAccount(item)"
+        >
+          {{ item.role }}
+          <text class="role-tooltip">{{ item.tip }}</text>
+        </button>
+      </view>
+      <text class="hint">点击角色可快速填入演示账号，鼠标悬停查看说明</text>
     </view>
   </view>
 </template>
@@ -58,6 +70,34 @@ const form = ref({ username: '', password: '' })
 const loading = ref(false)
 const errorMsg = ref('')
 const { setUser, setToken } = useUserStore()
+
+const accountTips = [
+  {
+    role: 'ADMIN',
+    username: 'admin',
+    password: '123456',
+    tip: '管理员：小程序仅提示入口，请使用后台管理端处理系统配置与总览'
+  },
+  {
+    role: 'MANAGER',
+    username: 'manager_hx',
+    password: '123456',
+    tip: '经理：进入团队看板，查看顾问排行和团队客户'
+  },
+  {
+    role: 'ADVISOR',
+    username: 'advisor_a',
+    password: '123456',
+    tip: '顾问：进入个人工作台，查看我的客户和我的任务'
+  }
+]
+
+function fillDemoAccount(item) {
+  form.value.username = item.username
+  form.value.password = item.password
+  errorMsg.value = ''
+  console.info('[login] demo account selected', item.role)
+}
 
 async function handleLogin() {
   if (!form.value.username.trim()) {
@@ -195,5 +235,56 @@ async function handleLogin() {
     font-size: 22rpx;
     color: #9ca3af;
   }
+}
+
+.role-tips {
+  display: flex;
+  justify-content: center;
+  gap: 12rpx;
+  margin-bottom: 16rpx;
+}
+
+.role-tip-btn {
+  position: relative;
+  margin: 0;
+  padding: 0 18rpx;
+  height: 48rpx;
+  line-height: 48rpx;
+  border-radius: 999rpx;
+  border: 1rpx solid #dbe4f0;
+  background: #f8fafc;
+  color: #1f2937;
+  font-size: 20rpx;
+  font-weight: 700;
+
+  &::after {
+    border: none;
+  }
+
+  &:hover .role-tooltip {
+    opacity: 1;
+    transform: translate(-50%, -8rpx);
+    pointer-events: auto;
+  }
+}
+
+.role-tooltip {
+  position: absolute;
+  left: 50%;
+  bottom: 58rpx;
+  z-index: 10;
+  width: 360rpx;
+  padding: 14rpx 16rpx;
+  border-radius: 10rpx;
+  background: #111827;
+  color: #ffffff;
+  font-size: 20rpx;
+  font-weight: 500;
+  line-height: 1.45;
+  white-space: normal;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 0);
+  transition: opacity 0.16s ease, transform 0.16s ease;
 }
 </style>
