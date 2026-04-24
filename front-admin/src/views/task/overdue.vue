@@ -11,11 +11,11 @@
         <span class="table-count">{{ total }} 条</span>
       </div>
       <el-table :data="tableData" v-loading="loading">
-        <el-table-column label="任务标题" min-width="180">
+        <el-table-column label="任务标题" min-width="160">
           <template #default="{ row }"><span class="cell-primary">{{ row.title }}</span></template>
         </el-table-column>
-        <el-table-column prop="customerName" label="关联客户" width="90" />
-        <el-table-column prop="ownerName"    label="负责人"   width="80" />
+        <el-table-column prop="customerName" label="关联客户" width="100" />
+        <el-table-column prop="ownerName"    label="负责人"   width="90" />
         <el-table-column label="应完成时间" width="130">
           <template #default="{ row }">
             <span style="font-size:12px; color:var(--danger)">{{ row.taskDate }} {{ row.taskTime }}</span>

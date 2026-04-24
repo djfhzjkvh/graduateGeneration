@@ -20,7 +20,7 @@
         <el-table-column label="客户姓名" min-width="100">
           <template #default="{ row }"><span class="cell-primary">{{ row.customerName }}</span></template>
         </el-table-column>
-        <el-table-column label="手机号" min-width="130">
+        <el-table-column label="手机号" width="140">
           <template #default="{ row }"><span class="cell-mono">{{ row.mobile }}</span></template>
         </el-table-column>
         <el-table-column label="热度分" width="130">
