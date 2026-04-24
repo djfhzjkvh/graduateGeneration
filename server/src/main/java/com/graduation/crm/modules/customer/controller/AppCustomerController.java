@@ -4,6 +4,7 @@ import com.graduation.crm.common.result.PageResult;
 import com.graduation.crm.common.result.Result;
 import com.graduation.crm.modules.customer.dto.CustomerCreateDTO;
 import com.graduation.crm.modules.customer.dto.CustomerQueryDTO;
+import com.graduation.crm.modules.customer.dto.CustomerStatusUpdateDTO;
 import com.graduation.crm.modules.customer.dto.CustomerUpdateDTO;
 import com.graduation.crm.modules.customer.service.CustomerService;
 import com.graduation.crm.modules.customer.vo.CustomerDetailVO;
@@ -12,15 +13,21 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
 
 /**
  * 小程序端客户接口。
  *
- * 面向置业顾问和销售经理的移动端客户操作，后续接入登录后需要在 Service
- * 或数据权限层限制顾问只能访问自己名下客户、经理只能访问团队客户。
+ * 面向置业顾问和销售经理的移动端客户操作，后续接入登录后需要在数据权限层限制访问范围。
  */
 @Tag(name = "移动端客户接口")
 @Validated
@@ -66,6 +73,16 @@ public class AppCustomerController {
     @Operation(summary = "更新客户")
     public Result<Void> update(@PathVariable Long id, @RequestBody CustomerUpdateDTO dto) {
         customerService.update(id, dto);
+        return Result.success();
+    }
+
+    /**
+     * 客户状态流转，用于顾问在跟进后推进客户阶段。
+     */
+    @PutMapping("/{id}/status")
+    @Operation(summary = "客户状态流转")
+    public Result<Void> updateStatus(@PathVariable Long id, @RequestBody @Valid CustomerStatusUpdateDTO dto) {
+        customerService.updateStatus(id, dto);
         return Result.success();
     }
 

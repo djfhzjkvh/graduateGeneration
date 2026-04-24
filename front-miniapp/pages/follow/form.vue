@@ -82,7 +82,9 @@ import { ref, computed } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { FOLLOW_METHOD, FOLLOW_RESULT } from '../../constants/dictionary'
 import { followApi } from '../../api/follow'
+import { customerApi } from '../../api/customer'
 import { useUserStore } from '../../stores/user'
+import { mapCustomer } from '../../utils/adapters'
 
 const form = ref({ method: '', result: '', content: '', summary: '', nextFollowDate: '', duration: '' })
 const saving = ref(false)
@@ -95,11 +97,24 @@ const followResultLabel = computed(() => {
   return cfg ? cfg.label : ''
 })
 
-onLoad((options) => {
+onLoad(async (options) => {
   customerId = options?.customerId
   customerName.value = options?.customerName || ''
   loadUser()
+  await fetchCustomer()
 })
+
+async function fetchCustomer() {
+  if (!customerId) return
+
+  try {
+    const data = mapCustomer(await customerApi.detail(customerId))
+    customerName.value = data.name || customerName.value
+    console.info('[follow-form] customer detail loaded', customerId)
+  } catch (error) {
+    console.warn('[follow-form] customer detail load failed', error)
+  }
+}
 
 const PICKER_CFG = {
   method: { keys: Object.keys(FOLLOW_METHOD), labels: Object.values(FOLLOW_METHOD) },
@@ -153,7 +168,7 @@ async function save() {
       cancelText: '不了',
       success(res) {
         if (res.confirm) {
-          uni.navigateTo({ url: `/pages/task/form?customerId=${customerId}&customerName=${customerName.value}` })
+          uni.navigateTo({ url: `/pages/task/form?customerId=${customerId}&customerName=${encodeURIComponent(customerName.value)}` })
         } else {
           uni.showToast({ title: '记录成功', icon: 'success' })
           setTimeout(() => uni.navigateBack(), 1200)

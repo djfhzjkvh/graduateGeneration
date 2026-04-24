@@ -1,8 +1,24 @@
 <script>
+import { authApi } from './api/auth'
+import { useUserStore } from './stores/user'
+import { mapUser } from './utils/adapters'
+
 export default {
-  onLaunch() {
+  async onLaunch() {
     const token = uni.getStorageSync('token')
     if (token) {
+      const { setUser, logout } = useUserStore()
+      try {
+        const data = await authApi.profile()
+        const profile = data?.userInfo || data
+        setUser(mapUser(profile || {}))
+        console.info('[app] profile initialized')
+      } catch (error) {
+        console.warn('[app] profile initialize failed', error)
+        logout()
+        uni.reLaunch({ url: '/pages/login/login' })
+        return
+      }
       uni.switchTab({ url: '/pages/home/index' })
     } else {
       uni.reLaunch({ url: '/pages/login/login' })

@@ -39,7 +39,7 @@
           v-for="task in todayTasks"
           :key="task.id"
           :task="task"
-          @tap="goTaskDetail"
+          @select="goTaskDetail"
           @complete="completeTask"
         />
       </view>
@@ -57,7 +57,7 @@
           :key="c.id"
           :customer="c"
           :show-actions="false"
-          @tap="goCustomerDetail"
+          @select="goCustomerDetail"
         />
       </view>
       <EmptyState v-else icon="客" text="暂无高意向客户" />
@@ -135,8 +135,30 @@ async function fetchData() {
 
 function goCustomerList() { uni.switchTab({ url: '/pages/customer/list' }) }
 function goTaskList() { uni.switchTab({ url: '/pages/task/list' }) }
-function goCustomerDetail(c) { uni.navigateTo({ url: `/pages/customer/detail?id=${c.id}` }) }
-function goTaskDetail(t) { uni.navigateTo({ url: `/pages/task/detail?id=${t.id}` }) }
+function goCustomerDetail(c) {
+  if (!c?.id) {
+    if (c?.type || c?.target || c?.currentTarget) {
+      console.warn('[home] native tap event ignored', c)
+      return
+    }
+    console.warn('[home] navigate customer detail blocked, missing customer id', c)
+    uni.showToast({ title: '客户ID缺失，无法查看详情', icon: 'none' })
+    return
+  }
+  uni.navigateTo({ url: `/pages/customer/detail?id=${c.id}` })
+}
+function goTaskDetail(t) {
+  if (!t?.id) {
+    if (t?.type || t?.target || t?.currentTarget) {
+      console.warn('[home] native task tap event ignored', t)
+      return
+    }
+    console.warn('[home] navigate task detail blocked, missing task id', t)
+    uni.showToast({ title: '任务ID缺失，无法查看详情', icon: 'none' })
+    return
+  }
+  uni.navigateTo({ url: `/pages/task/detail?id=${t.id}` })
+}
 
 function completeTask(task) {
   uni.showModal({

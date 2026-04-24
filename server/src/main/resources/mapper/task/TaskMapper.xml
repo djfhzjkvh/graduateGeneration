@@ -37,5 +37,27 @@
         </if>
         ORDER BY t.task_date ASC, t.task_time ASC, t.created_at DESC
     </select>
-</mapper>
 
+    <select id="selectTaskDetail" resultType="com.graduation.crm.modules.task.vo.TaskVO">
+        SELECT
+            t.id,
+            t.customer_id,
+            c.customer_name,
+            t.task_type,
+            t.title,
+            t.content,
+            t.task_date,
+            t.task_time,
+            t.status,
+            t.priority,
+            t.owner_id,
+            u.nickname AS owner_name,
+            t.complete_time
+        FROM crm_task t
+        LEFT JOIN crm_customer c ON t.customer_id = c.id
+        LEFT JOIN sys_user u ON t.owner_id = u.id
+        WHERE t.deleted = 0
+          AND t.id = #{id}
+        LIMIT 1
+    </select>
+</mapper>

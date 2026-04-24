@@ -13,8 +13,11 @@ export function mapUser(user = {}) {
 }
 
 export function mapCustomer(customer = {}) {
+  const id = customer.id ?? customer.customerId
   return {
     ...customer,
+    // Different backend modules return either id or customerId; the miniapp uses id uniformly.
+    id,
     name: customer.name || customer.customerName || '',
     phone: customer.phone || customer.mobile || '',
     focusArea: customer.focusArea || customer.region || '',

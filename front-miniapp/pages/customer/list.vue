@@ -33,7 +33,7 @@
         v-for="c in customers"
         :key="c.id"
         :customer="c"
-        @tap="goDetail"
+        @select="goDetail"
         @call="callCustomer"
         @follow="goFollow"
       />
@@ -52,6 +52,7 @@ import { onPullDownRefresh } from '@dcloudio/uni-app'
 import { CUSTOMER_STATUS } from '../../constants/dictionary'
 import { customerApi } from '../../api/customer'
 import { mapCustomer } from '../../utils/adapters'
+import { callPhone } from '../../utils/phone'
 import CustomerCard from '../../components/CustomerCard.vue'
 import EmptyState from '../../components/EmptyState.vue'
 
@@ -85,10 +86,21 @@ function clearSearch() {
   fetchCustomers()
 }
 
-function goDetail(c) { uni.navigateTo({ url: `/pages/customer/detail?id=${c.id}` }) }
+function goDetail(c) {
+  if (!c?.id) {
+    if (c?.type || c?.target || c?.currentTarget) {
+      console.warn('[customer-list] native tap event ignored', c)
+      return
+    }
+    console.warn('[customer-list] navigate detail blocked, missing customer id', c)
+    uni.showToast({ title: '客户ID缺失，无法查看详情', icon: 'none' })
+    return
+  }
+  uni.navigateTo({ url: `/pages/customer/detail?id=${c.id}` })
+}
 function goCreate() { uni.navigateTo({ url: '/pages/customer/form' }) }
 function goFollow(c) { uni.navigateTo({ url: `/pages/follow/form?customerId=${c.id}&customerName=${encodeURIComponent(c.name)}` }) }
-function callCustomer(c) { uni.makePhoneCall({ phoneNumber: c.phone, fail() {} }) }
+function callCustomer(c) { callPhone(c.phone) }
 
 onMounted(fetchCustomers)
 onPullDownRefresh(fetchCustomers)

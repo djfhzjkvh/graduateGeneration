@@ -73,8 +73,10 @@
 import { ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { competitorApi } from '../../api/competitor'
+import { customerApi } from '../../api/customer'
 import { useUserStore } from '../../stores/user'
 import { formatDate } from '../../utils/format'
+import { mapCustomer } from '../../utils/adapters'
 import EmptyState from '../../components/EmptyState.vue'
 
 const { userInfo, loadUser } = useUserStore()
@@ -90,12 +92,25 @@ const form = ref({
   customerConcern: ''
 })
 
-onLoad((options) => {
+onLoad(async (options) => {
   customerId.value = options?.customerId || null
   customerName.value = options?.customerName || ''
   loadUser()
+  await fetchCustomer()
   fetchHistory()
 })
+
+async function fetchCustomer() {
+  if (!customerId.value) return
+
+  try {
+    const data = mapCustomer(await customerApi.detail(customerId.value))
+    customerName.value = data.name || customerName.value
+    console.info('[competitor-compare] customer detail loaded', customerId.value)
+  } catch (error) {
+    console.warn('[competitor-compare] customer detail load failed', error)
+  }
+}
 
 function payload() {
   return {

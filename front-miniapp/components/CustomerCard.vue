@@ -1,5 +1,5 @@
 <template>
-  <view class="customer-card" @tap="$emit('tap', customer)">
+  <view class="customer-card" @tap.stop="handleSelect">
     <view class="card-header">
       <view class="name-row">
         <text class="name">{{ customer.name }}</text>
@@ -35,7 +35,7 @@
         <text class="action-text">跟进</text>
       </view>
       <view class="action-divider" />
-      <view class="action-btn" @tap.stop="$emit('tap', customer)">
+      <view class="action-btn" @tap.stop="handleSelect">
         <text class="action-icon">👁</text>
         <text class="action-text">详情</text>
       </view>
@@ -47,11 +47,18 @@
 import { maskPhone, formatBudget, formatDate } from '../utils/format'
 import StatusTag from './StatusTag.vue'
 
-defineProps({
+const props = defineProps({
   customer: { type: Object, required: true },
   showActions: { type: Boolean, default: true }
 })
-defineEmits(['tap', 'call', 'follow'])
+const emit = defineEmits(['select', 'call', 'follow'])
+
+function handleSelect() {
+  if (!props.customer?.id) {
+    console.warn('[customer-card] select customer without id', props.customer)
+  }
+  emit('select', props.customer)
+}
 </script>
 
 <style lang="scss" scoped>

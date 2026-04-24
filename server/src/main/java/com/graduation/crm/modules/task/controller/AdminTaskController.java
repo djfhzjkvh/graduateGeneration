@@ -5,9 +5,12 @@ import com.graduation.crm.common.result.Result;
 import com.graduation.crm.modules.task.dto.TaskQueryDTO;
 import com.graduation.crm.modules.task.dto.TaskRemindLogQueryDTO;
 import com.graduation.crm.modules.task.dto.TaskTransferDTO;
+import com.graduation.crm.modules.task.dto.TaskTransferLogQueryDTO;
 import com.graduation.crm.modules.task.service.TaskService;
+import com.graduation.crm.modules.task.vo.TaskDetailVO;
 import com.graduation.crm.modules.task.vo.TaskRemindLogVO;
 import com.graduation.crm.modules.task.vo.TaskStatVO;
+import com.graduation.crm.modules.task.vo.TaskTransferLogVO;
 import com.graduation.crm.modules.task.vo.TaskVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -44,6 +47,15 @@ public class AdminTaskController {
     }
 
     /**
+     * 查询任务详情，聚合基础信息、提醒日志和转派日志。
+     */
+    @GetMapping("/{id}")
+    @Operation(summary = "任务详情")
+    public Result<TaskDetailVO> detail(@PathVariable Long id) {
+        return Result.success(taskService.detail(id));
+    }
+
+    /**
      * 查询任务统计数量，供管理端任务看板展示。
      */
     @GetMapping("/stat")
@@ -59,6 +71,24 @@ public class AdminTaskController {
     @Operation(summary = "任务提醒日志")
     public Result<PageResult<TaskRemindLogVO>> remindLogs(TaskRemindLogQueryDTO queryDTO) {
         return Result.success(taskService.remindLogPage(queryDTO));
+    }
+
+    /**
+     * 查询任务转派日志，便于经理追踪任务负责人变化。
+     */
+    @GetMapping("/transfer-logs")
+    @Operation(summary = "任务转派日志")
+    public Result<PageResult<TaskTransferLogVO>> transferLogs(TaskTransferLogQueryDTO queryDTO) {
+        return Result.success(taskService.transferLogPage(queryDTO));
+    }
+
+    /**
+     * 查询单个任务的转派记录。
+     */
+    @GetMapping("/{taskId}/transfer-logs")
+    @Operation(summary = "单任务转派日志")
+    public Result<PageResult<TaskTransferLogVO>> transferLogsByTask(@PathVariable Long taskId, TaskTransferLogQueryDTO queryDTO) {
+        return Result.success(taskService.transferLogsByTask(taskId, queryDTO));
     }
 
     /**

@@ -148,6 +148,31 @@
         <el-form-item label="主要短板">
           <el-input v-model="form.weakness" type="textarea" :rows="3" maxlength="240" show-word-limit />
         </el-form-item>
+        <el-form-item label="竞品图片">
+          <div class="inline-upload">
+            <el-upload
+              ref="uploadRef"
+              :auto-upload="false"
+              :limit="1"
+              accept="image/*"
+              :on-change="handleImageChange"
+              :on-remove="handleImageRemove"
+            >
+              <el-button size="small">选择图片</el-button>
+            </el-upload>
+            <el-button size="small" type="primary" :loading="imageUploading" @click="uploadImage">
+              上传图片
+            </el-button>
+          </div>
+          <div v-if="uploadedImage" class="uploaded-file">
+            <img v-if="isImage(uploadedImage)" :src="uploadedImage.fileUrl" :alt="uploadedImage.fileName" />
+            <div class="uploaded-file-info">
+              <div class="cell-primary">{{ uploadedImage.fileName }}</div>
+              <div class="cell-muted cell-ellipsis">{{ uploadedImage.fileUrl }}</div>
+            </div>
+          </div>
+          <div class="field-tip">后端竞品表暂未提供图片字段，当前图片会先作为附件上传并返回文件地址。</div>
+        </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
@@ -182,6 +207,10 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { competitorApi } from '@/api/competitor'
+import { formatPrice } from '@/utils/format'
+import { cleanPayload as cleanPayloadBase } from '@/utils/payload'
+import { logBusiness } from '@/utils/logger'
+import { isImageFile, uploadBusinessFile } from '@/utils/upload'
 
 const loading = ref(false)
 const submitLoading = ref(false)
@@ -193,7 +222,12 @@ const dialogVisible = ref(false)
 const detailVisible = ref(false)
 const isEdit = ref(false)
 const formRef = ref()
+const uploadRef = ref()
 const currentItem = ref(null)
+const selectedImage = ref(null)
+const uploadedImage = ref(null)
+const imageUploading = ref(false)
+const MAX_UPLOAD_IMAGE_SIZE = 50 * 1024 * 1024
 
 const filters = reactive({ keyword: '', region: '', status: null })
 
@@ -227,37 +261,22 @@ const detailRows = computed(() => {
 })
 
 function logStep(action, payload = {}) {
-  console.info(`[competitors] ${action}`, payload)
-}
-
-function formatPrice(price) {
-  if (price === null || price === undefined || price === '') return '-'
-  return `${Number(price).toLocaleString()} 元/㎡`
+  logBusiness('competitors', action, payload)
 }
 
 function cleanPayload(source) {
-  return {
-    projectName: source.projectName?.trim(),
-    region: source.region || null,
-    avgPrice: source.avgPrice ?? null,
-    discountInfo: source.discountInfo || null,
-    houseTypes: source.houseTypes || null,
-    handoverDate: source.handoverDate || null,
-    highlights: source.highlights || null,
-    weakness: source.weakness || null,
-    status: source.status,
-  }
+  const payload = cleanPayloadBase(source, ['projectName', 'region', 'avgPrice', 'discountInfo', 'houseTypes', 'handoverDate', 'highlights', 'weakness', 'status'])
+  payload.projectName = payload.projectName?.trim()
+  return payload
 }
 
 async function fetchData() {
   loading.value = true
   const params = { pageNum: currentPage.value, pageSize: pageSize.value, ...filters }
-  logStep('page:start', params)
   try {
     const data = await competitorApi.page(params)
     tableData.value = data?.list || []
     total.value = data?.total || 0
-    logStep('page:success', { total: total.value })
   } finally {
     loading.value = false
   }
@@ -286,6 +305,9 @@ function resetForm() {
     weakness: '',
     status: 1,
   })
+  selectedImage.value = null
+  uploadedImage.value = null
+  uploadRef.value?.clearFiles()
 }
 
 function openCreate() {
@@ -334,6 +356,53 @@ async function handleSubmit() {
     await fetchData()
   } finally {
     submitLoading.value = false
+  }
+}
+
+function handleImageChange(file) {
+  if (file.size > MAX_UPLOAD_IMAGE_SIZE) {
+    ElMessage.warning('图片不能超过 50MB，请压缩后上传')
+    uploadRef.value?.clearFiles()
+    selectedImage.value = null
+    logStep('image:select:oversize', { name: file.name, size: file.size })
+    return
+  }
+  selectedImage.value = file.raw
+  logStep('image:select', { name: file.name, size: file.size })
+}
+
+function handleImageRemove() {
+  selectedImage.value = null
+}
+
+function isImage(file) {
+  return isImageFile(file)
+}
+
+async function uploadImage() {
+  if (!selectedImage.value) {
+    ElMessage.warning('请先选择竞品图片')
+    return
+  }
+  if (selectedImage.value.size > MAX_UPLOAD_IMAGE_SIZE) {
+    ElMessage.warning('图片不能超过 50MB，请压缩后上传')
+    return
+  }
+  imageUploading.value = true
+  logStep('image:upload:start', {
+    fileName: selectedImage.value.name,
+    competitorId: form.id,
+  })
+  try {
+    uploadedImage.value = await uploadBusinessFile({
+      file: selectedImage.value,
+      bizType: 'COMPETITOR_PROJECT',
+      bizId: form.id,
+    })
+    ElMessage.success('图片上传成功')
+    logStep('image:upload:success', uploadedImage.value)
+  } finally {
+    imageUploading.value = false
   }
 }
 
@@ -401,5 +470,42 @@ onMounted(fetchData)
 
 .detail-value {
   line-height: 1.7;
+}
+
+.inline-upload {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.uploaded-file {
+  width: 100%;
+  display: flex;
+  gap: 10px;
+  padding: 10px;
+  margin-top: 10px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  background: var(--surface-50);
+}
+
+.uploaded-file img {
+  width: 64px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+
+.uploaded-file-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.field-tip {
+  color: var(--text-400);
+  font-size: 12px;
+  line-height: 1.5;
+  margin-top: 8px;
 }
 </style>

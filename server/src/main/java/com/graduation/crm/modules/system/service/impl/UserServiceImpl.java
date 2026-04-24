@@ -16,6 +16,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
+/**
+ * 系统用户业务服务实现。
+ */
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
@@ -89,4 +92,3 @@ public class UserServiceImpl implements UserService {
         sysUserMapper.updateById(user);
     }
 }
-

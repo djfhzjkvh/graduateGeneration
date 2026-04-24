@@ -56,6 +56,8 @@
 import { ref, computed } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { aiApi } from '../../api/ai'
+import { customerApi } from '../../api/customer'
+import { mapCustomer } from '../../utils/adapters'
 import EmptyState from '../../components/EmptyState.vue'
 
 const customerId = ref(null)
@@ -86,10 +88,23 @@ const channels = [
 const sceneLabel = computed(() => scenes.find(i => i.value === sceneType.value)?.label || '请选择')
 const channelLabel = computed(() => channels.find(i => i.value === channelType.value)?.label || '请选择')
 
-onLoad((options) => {
+onLoad(async (options) => {
   customerId.value = options?.customerId || null
   customerName.value = options?.customerName || ''
+  await fetchCustomer()
 })
+
+async function fetchCustomer() {
+  if (!customerId.value) return
+
+  try {
+    const data = mapCustomer(await customerApi.detail(customerId.value))
+    customerName.value = data.name || customerName.value
+    console.info('[ai-script] customer detail loaded', customerId.value)
+  } catch (error) {
+    console.warn('[ai-script] customer detail load failed', error)
+  }
+}
 
 function pickScene() {
   uni.showActionSheet({

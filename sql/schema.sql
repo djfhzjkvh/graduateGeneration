@@ -130,7 +130,7 @@ CREATE TABLE sys_file (
     biz_id BIGINT,
     file_name VARCHAR(255) NOT NULL,
     file_url VARCHAR(500) NOT NULL,
-    file_type VARCHAR(50),
+    file_type VARCHAR(100),
     file_size BIGINT,
     created_by BIGINT,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -494,4 +494,3 @@ CREATE TABLE sys_oper_log (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Operation log';
 
 SET FOREIGN_KEY_CHECKS = 1;
-

@@ -9,10 +9,16 @@ export const customerApi = {
 
   /** GET /api/app/customers/:id — 已实现（详情用 app 端接口，admin 端暂无） */
   detail: (id) => request.get(`/app/customers/${id}`),
+  follows: (customerId) => request.get(`/app/customers/${customerId}/follows`),
+
+  /** 管理端客户分配与状态流转 */
+  assignLogs: (params) => request.get('/admin/customers/assign-logs', { params }),
+  assignLogsByCustomer: (customerId, params) => request.get(`/admin/customers/${customerId}/assign-logs`, { params }),
+  assign: (id, data) => request.put(`/admin/customers/${id}/assign`, data),
+  updateStatus: (id, data) => request.put(`/admin/customers/${id}/status`, data),
 
   // TODO: 以下接口后端待补充（admin 端）
   // update: (id, data) => request.put(`/admin/customers/${id}`, data),
-  // assign: (id, advisorId) => request.post(`/admin/customers/${id}/assign`, { advisorId }),
   // export: (params) => request.get('/admin/customers/export', { params, responseType: 'blob' }),
 
   /** GET /api/admin/customer-tags — 已实现 */

@@ -37,10 +37,14 @@
 </template>
 
 <script setup>
-import { onMounted, computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
+import { authApi } from '../../api/auth'
 import { useUserStore } from '../../stores/user'
+import { mapUser } from '../../utils/adapters'
 
-const { userInfo, loadUser, logout } = useUserStore()
+const { userInfo, loadUser, setUser, logout } = useUserStore()
+const refreshing = ref(false)
 
 const ROLE_LABEL = { ADMIN: '管理员', MANAGER: '销售经理', ADVISOR: '销售顾问' }
 
@@ -55,11 +59,27 @@ const displayRole = computed(() => {
 })
 
 const menuItems = [
-  { icon: '👤', label: '个人资料', action: () => uni.showToast({ title: '开发中', icon: 'none' }) },
+  { icon: '👤', label: '个人资料', action: () => uni.navigateTo({ url: '/pages/profile/index' }) },
   { icon: '👥', label: '我的客户', action: () => uni.switchTab({ url: '/pages/customer/list' }) },
   { icon: '📋', label: '我的任务', action: () => uni.switchTab({ url: '/pages/task/list' }) },
   { icon: '🔔', label: '消息通知', action: () => uni.navigateTo({ url: '/pages/message/list' }) }
 ]
+
+async function refreshProfile() {
+  if (!uni.getStorageSync('token') || refreshing.value) return
+
+  refreshing.value = true
+  try {
+    const data = await authApi.profile()
+    const profile = data?.userInfo || data
+    setUser(mapUser(profile || {}))
+    console.info('[mine] profile refreshed')
+  } catch (error) {
+    console.warn('[mine] profile refresh failed', error)
+  } finally {
+    refreshing.value = false
+  }
+}
 
 function handleLogout() {
   uni.showModal({
@@ -67,8 +87,15 @@ function handleLogout() {
     content: '确认退出当前账号？',
     confirmColor: '#c81e1e',
     confirmText: '退出',
-    success(res) {
+    async success(res) {
       if (res.confirm) {
+        try {
+          await authApi.logout()
+          console.info('[mine] backend logout success')
+        } catch (error) {
+          // 退出登录以清理本地登录态为准，接口失败时记录日志方便排查。
+          console.warn('[mine] backend logout failed', error)
+        }
         logout()
         uni.reLaunch({ url: '/pages/login/login' })
       }
@@ -78,6 +105,11 @@ function handleLogout() {
 
 onMounted(() => {
   loadUser()
+})
+
+onShow(() => {
+  loadUser()
+  refreshProfile()
 })
 </script>
 

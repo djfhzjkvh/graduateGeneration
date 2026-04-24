@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graduation.crm.common.exception.BusinessException;
 import com.graduation.crm.modules.ai.client.QwenAiClient;
+import com.graduation.crm.modules.ai.dto.AiAudioInputDTO;
 import com.graduation.crm.modules.ai.dto.AiChatDTO;
 import com.graduation.crm.modules.ai.dto.LeadConfirmDTO;
 import com.graduation.crm.modules.ai.dto.LeadExtractDTO;
@@ -17,6 +18,7 @@ import com.graduation.crm.modules.ai.vo.LeadExtractVO;
 import com.graduation.crm.modules.ai.vo.ScriptGenerateVO;
 import com.graduation.crm.modules.customer.service.CustomerService;
 import com.graduation.crm.modules.customer.vo.CustomerDetailVO;
+import com.graduation.crm.modules.file.entity.SysFile;
 import com.graduation.crm.modules.file.service.FileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -26,6 +28,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * AI 业务服务实现。
+ */
 @Service
 @RequiredArgsConstructor
 public class AiServiceImpl implements AiService {
@@ -68,7 +73,7 @@ public class AiServiceImpl implements AiService {
         chatDTO.setBizType("LEAD_EXTRACT");
         chatDTO.setPrompt(buildLeadExtractPrompt(dto));
         chatDTO.setImageUrls(resolveImageInputs(dto));
-        chatDTO.setAudios(dto.getAudios());
+        chatDTO.setAudios(resolveAudioInputs(dto));
         AiChatVO chatVO = qwenAiClient.chat(chatDTO);
 
         LeadExtractVO vo = parseLeadExtract(chatVO.getContent());
@@ -91,18 +96,6 @@ public class AiServiceImpl implements AiService {
         return vo;
     }
 
-    private List<String> resolveImageInputs(LeadExtractDTO dto) {
-        List<String> images = new ArrayList<>();
-        if (dto.getImageUrls() != null) {
-            images.addAll(dto.getImageUrls());
-        }
-        if (dto.getSourceFileId() != null) {
-            // Qwen 云端无法访问本机 localhost 图片，因此本地上传文件转成 data URL 传给模型。
-            images.add(fileService.readImageAsDataUrl(dto.getSourceFileId()));
-        }
-        return images.isEmpty() ? null : images;
-    }
-
     @Override
     public Long confirmLead(LeadConfirmDTO dto) {
         LeadExtractRecord record = leadExtractRecordMapper.selectOne(new LambdaQueryWrapper<LeadExtractRecord>()
@@ -118,6 +111,38 @@ public class AiServiceImpl implements AiService {
         record.setCustomerId(customerId);
         leadExtractRecordMapper.updateById(record);
         return customerId;
+    }
+
+    private List<String> resolveImageInputs(LeadExtractDTO dto) {
+        List<String> images = new ArrayList<>();
+        if (dto.getImageUrls() != null) {
+            images.addAll(dto.getImageUrls());
+        }
+        if (dto.getSourceFileId() != null) {
+            SysFile file = fileService.getEntity(dto.getSourceFileId());
+            // Qwen 云端无法访问本机 localhost 文件，因此本地图片转成 data URL 传给模型。
+            if (file.getFileType() != null && file.getFileType().startsWith("image/")) {
+                images.add(fileService.readImageAsDataUrl(dto.getSourceFileId()));
+            }
+        }
+        return images.isEmpty() ? null : images;
+    }
+
+    private List<AiAudioInputDTO> resolveAudioInputs(LeadExtractDTO dto) {
+        List<AiAudioInputDTO> audios = new ArrayList<>();
+        if (dto.getAudios() != null) {
+            audios.addAll(dto.getAudios());
+        }
+        if (dto.getSourceFileId() != null) {
+            SysFile file = fileService.getEntity(dto.getSourceFileId());
+            if (file.getFileType() != null && file.getFileType().startsWith("audio/")) {
+                AiAudioInputDTO audio = new AiAudioInputDTO();
+                audio.setData(fileService.readAudioAsBase64(dto.getSourceFileId()));
+                audio.setFormat(fileService.resolveAudioFormat(dto.getSourceFileId()));
+                audios.add(audio);
+            }
+        }
+        return audios.isEmpty() ? null : audios;
     }
 
     private String buildScriptPrompt(ScriptGenerateDTO dto, CustomerDetailVO customer) {

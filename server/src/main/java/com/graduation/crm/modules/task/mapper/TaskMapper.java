@@ -12,5 +12,6 @@ import org.apache.ibatis.annotations.Param;
 public interface TaskMapper extends BaseMapper<Task> {
 
     IPage<TaskVO> selectTaskPage(IPage<TaskVO> page, @Param("query") TaskQueryDTO query);
-}
 
+    TaskVO selectTaskDetail(@Param("id") Long id);
+}

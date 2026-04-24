@@ -25,6 +25,6 @@ public class CustomerCreateDTO {
     private String houseType;
     private String purpose;
     private String remark;
+    private Long createdBy;
     private List<Long> tagIds;
 }
-

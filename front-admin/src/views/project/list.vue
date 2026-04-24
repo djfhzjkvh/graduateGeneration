@@ -147,6 +147,31 @@
         <el-form-item label="优惠信息">
           <el-input v-model="projectForm.discountInfo" type="textarea" :rows="2" maxlength="180" show-word-limit />
         </el-form-item>
+        <el-form-item label="楼盘图片">
+          <div class="inline-upload">
+            <el-upload
+              ref="projectUploadRef"
+              :auto-upload="false"
+              :limit="1"
+              accept="image/*"
+              :on-change="handleProjectImageChange"
+              :on-remove="handleProjectImageRemove"
+            >
+              <el-button size="small">选择图片</el-button>
+            </el-upload>
+            <el-button size="small" type="primary" :loading="projectImageUploading" @click="uploadProjectImage">
+              上传图片
+            </el-button>
+          </div>
+          <div v-if="projectImage" class="uploaded-file">
+            <img v-if="isImage(projectImage)" :src="projectImage.fileUrl" :alt="projectImage.fileName" />
+            <div class="uploaded-file-info">
+              <div class="cell-primary">{{ projectImage.fileName }}</div>
+              <div class="cell-muted cell-ellipsis">{{ projectImage.fileUrl }}</div>
+            </div>
+          </div>
+          <div class="field-tip">后端楼盘表暂未提供图片字段，当前图片会先作为附件上传并返回文件地址。</div>
+        </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="projectDialogVisible = false">取消</el-button>
@@ -264,6 +289,10 @@
 import { onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { projectApi } from '@/api/project'
+import { formatPrice } from '@/utils/format'
+import { cleanPayload } from '@/utils/payload'
+import { logBusiness } from '@/utils/logger'
+import { isImageFile, uploadBusinessFile } from '@/utils/upload'
 
 const loading = ref(false)
 const projectSubmitLoading = ref(false)
@@ -282,6 +311,11 @@ const currentProject = ref(null)
 const houseTypes = ref([])
 const projectFormRef = ref()
 const houseFormRef = ref()
+const projectUploadRef = ref()
+const selectedProjectImage = ref(null)
+const projectImageUploading = ref(false)
+const projectImage = ref(null)
+const MAX_UPLOAD_IMAGE_SIZE = 50 * 1024 * 1024
 
 const filters = reactive({ keyword: '', region: '', status: null })
 
@@ -319,12 +353,7 @@ const houseRules = {
 }
 
 function logStep(action, payload = {}) {
-  console.info(`[projects] ${action}`, payload)
-}
-
-function formatPrice(price) {
-  if (price === null || price === undefined || price === '') return '-'
-  return `${Number(price).toLocaleString()} 元/㎡`
+  logBusiness('projects', action, payload)
 }
 
 function formatTotalPrice(row) {
@@ -336,22 +365,13 @@ function formatTotalPrice(row) {
   return '-'
 }
 
-function cleanPayload(source, keys) {
-  return keys.reduce((payload, key) => {
-    payload[key] = source[key] === '' ? null : source[key]
-    return payload
-  }, {})
-}
-
 async function fetchProjects() {
   loading.value = true
   const params = { pageNum: currentPage.value, pageSize: pageSize.value, ...filters }
-  logStep('page:start', params)
   try {
     const data = await projectApi.page(params)
     tableData.value = data?.list || []
     total.value = data?.total || 0
-    logStep('page:success', { total: total.value })
   } finally {
     loading.value = false
   }
@@ -380,6 +400,9 @@ function resetProjectForm() {
     handoverDate: '',
     status: 1,
   })
+  selectedProjectImage.value = null
+  projectImage.value = null
+  projectUploadRef.value?.clearFiles()
 }
 
 function openCreate() {
@@ -423,6 +446,53 @@ async function handleSubmitProject() {
     await fetchProjects()
   } finally {
     projectSubmitLoading.value = false
+  }
+}
+
+function handleProjectImageChange(file) {
+  if (file.size > MAX_UPLOAD_IMAGE_SIZE) {
+    ElMessage.warning('图片不能超过 50MB，请压缩后上传')
+    projectUploadRef.value?.clearFiles()
+    selectedProjectImage.value = null
+    logStep('image:select:oversize', { name: file.name, size: file.size })
+    return
+  }
+  selectedProjectImage.value = file.raw
+  logStep('image:select', { name: file.name, size: file.size })
+}
+
+function handleProjectImageRemove() {
+  selectedProjectImage.value = null
+}
+
+function isImage(file) {
+  return isImageFile(file)
+}
+
+async function uploadProjectImage() {
+  if (!selectedProjectImage.value) {
+    ElMessage.warning('请先选择楼盘图片')
+    return
+  }
+  if (selectedProjectImage.value.size > MAX_UPLOAD_IMAGE_SIZE) {
+    ElMessage.warning('图片不能超过 50MB，请压缩后上传')
+    return
+  }
+  projectImageUploading.value = true
+  logStep('image:upload:start', {
+    fileName: selectedProjectImage.value.name,
+    projectId: projectForm.id,
+  })
+  try {
+    projectImage.value = await uploadBusinessFile({
+      file: selectedProjectImage.value,
+      bizType: 'PROJECT',
+      bizId: projectForm.id,
+    })
+    ElMessage.success('图片上传成功')
+    logStep('image:upload:success', projectImage.value)
+  } finally {
+    projectImageUploading.value = false
   }
 }
 
@@ -565,5 +635,42 @@ onMounted(fetchProjects)
   align-items: center;
   justify-content: space-between;
   margin-bottom: 12px;
+}
+
+.inline-upload {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.uploaded-file {
+  width: 100%;
+  display: flex;
+  gap: 10px;
+  padding: 10px;
+  margin-top: 10px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  background: var(--surface-50);
+}
+
+.uploaded-file img {
+  width: 64px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+
+.uploaded-file-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.field-tip {
+  color: var(--text-400);
+  font-size: 12px;
+  line-height: 1.5;
+  margin-top: 8px;
 }
 </style>

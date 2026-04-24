@@ -19,7 +19,7 @@
         v-for="task in tasks"
         :key="task.id"
         :task="task"
-        @tap="goDetail"
+        @select="goDetail"
         @complete="completeTask"
       />
       <EmptyState v-if="!tasks.length" icon="✓" :text="emptyText" />
@@ -84,7 +84,18 @@ function setTab(key) {
   fetchTasks()
 }
 
-function goDetail(task) { uni.navigateTo({ url: `/pages/task/detail?id=${task.id}` }) }
+function goDetail(task) {
+  if (!task?.id) {
+    if (task?.type || task?.target || task?.currentTarget) {
+      console.warn('[task-list] native tap event ignored', task)
+      return
+    }
+    console.warn('[task-list] navigate detail blocked, missing task id', task)
+    uni.showToast({ title: '任务ID缺失，无法查看详情', icon: 'none' })
+    return
+  }
+  uni.navigateTo({ url: `/pages/task/detail?id=${task.id}` })
+}
 function goCreate() { uni.navigateTo({ url: '/pages/task/form' }) }
 
 function completeTask(task) {

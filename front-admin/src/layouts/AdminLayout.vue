@@ -34,16 +34,6 @@
         </div>
 
         <div class="nav-section">
-          <div class="nav-section-label">项目管理</div>
-          <router-link to="/project/list" class="nav-item" active-class="active">
-            <span class="nav-icon">楼</span>楼盘管理
-          </router-link>
-          <router-link to="/project/competitors" class="nav-item" active-class="active">
-            <span class="nav-icon">竞</span>竞品管理
-          </router-link>
-        </div>
-
-        <div class="nav-section">
           <div class="nav-section-label">跟进任务</div>
           <router-link to="/task/list" class="nav-item" active-class="active">
             <span class="nav-icon">☑</span>任务列表
@@ -57,22 +47,52 @@
         </div>
 
         <div class="nav-section">
-          <div class="nav-section-label">组织管理</div>
-          <router-link to="/system/user" class="nav-item" active-class="active">
-            <span class="nav-icon">👤</span>用户管理
+          <div class="nav-section-label">项目管理</div>
+          <router-link to="/project/list" class="nav-item" active-class="active">
+            <span class="nav-icon">楼</span>楼盘管理
           </router-link>
-          <router-link to="/system/role" class="nav-item" active-class="active">
-            <span class="nav-icon">🔑</span>角色管理
-          </router-link>
-          <router-link to="/system/dept" class="nav-item" active-class="active">
-            <span class="nav-icon">🏢</span>部门管理
+          <router-link to="/project/competitors" class="nav-item" active-class="active">
+            <span class="nav-icon">竞</span>竞品管理
           </router-link>
         </div>
 
         <div class="nav-section">
-          <div class="nav-section-label">系统</div>
+          <div class="nav-section-label">报表统计</div>
+          <router-link to="/report/overview" class="nav-item" active-class="active">
+            <span class="nav-icon">表</span>经营报表
+          </router-link>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-label">组织管理</div>
+          <router-link to="/system/user" class="nav-item" active-class="active">
+            <span class="nav-icon">人</span>用户管理
+          </router-link>
+          <router-link to="/system/role" class="nav-item" active-class="active">
+            <span class="nav-icon">权</span>角色管理
+          </router-link>
+          <router-link to="/system/dept" class="nav-item" active-class="active">
+            <span class="nav-icon">部</span>部门管理
+          </router-link>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-label">系统运维</div>
+          <router-link to="/ops/config" class="nav-item" active-class="active">
+            <span class="nav-icon">配</span>系统配置
+          </router-link>
+          <router-link to="/ops/jobs" class="nav-item" active-class="active">
+            <span class="nav-icon">调</span>任务调度
+          </router-link>
+          <router-link to="/ops/logs" class="nav-item" active-class="active">
+            <span class="nav-icon">志</span>日志中心
+          </router-link>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-label">个人中心</div>
           <router-link to="/profile" class="nav-item" active-class="active">
-            <span class="nav-icon">⚙</span>个人信息
+            <span class="nav-icon">我</span>个人信息
           </router-link>
           <div class="nav-item" @click="handleLogout">
             <span class="nav-icon">⏏</span>退出登录

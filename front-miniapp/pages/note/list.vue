@@ -3,7 +3,7 @@
     <view class="note-toolbar">
       <view>
         <text class="toolbar-title">客户云笔记</text>
-        <text class="toolbar-sub">{{ notes.length }} 条复盘记录</text>
+        <text class="toolbar-sub">{{ customerName ? customerName + ' · ' : '' }}{{ notes.length }} 条复盘记录</text>
       </view>
       <button class="mini-btn" @tap="openEditor()">新增</button>
     </view>
@@ -35,15 +35,31 @@
 import { ref } from 'vue'
 import { onLoad, onShow } from '@dcloudio/uni-app'
 import { noteApi } from '../../api/note'
+import { customerApi } from '../../api/customer'
 import { formatDate } from '../../utils/format'
+import { mapCustomer } from '../../utils/adapters'
 import EmptyState from '../../components/EmptyState.vue'
 
 const customerId = ref(null)
+const customerName = ref('')
 const notes = ref([])
 
-onLoad((options) => {
+onLoad(async (options) => {
   customerId.value = options?.customerId || null
+  await fetchCustomer()
 })
+
+async function fetchCustomer() {
+  if (!customerId.value) return
+
+  try {
+    const data = mapCustomer(await customerApi.detail(customerId.value))
+    customerName.value = data.name || ''
+    console.info('[note-list] customer detail loaded', customerId.value)
+  } catch (error) {
+    console.warn('[note-list] customer detail load failed', error)
+  }
+}
 
 onShow(() => {
   if (customerId.value) fetchNotes()

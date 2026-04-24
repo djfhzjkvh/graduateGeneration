@@ -1,5 +1,5 @@
 <template>
-  <view class="task-card" @tap="$emit('tap', task)">
+  <view class="task-card" @tap.stop="handleSelect">
     <view class="card-left">
       <view class="priority-bar" :style="{ background: priorityCfg.color }" />
     </view>
@@ -42,9 +42,16 @@ const props = defineProps({
   task: { type: Object, required: true },
   showActions: { type: Boolean, default: true }
 })
-defineEmits(['tap', 'complete'])
+const emit = defineEmits(['select', 'complete'])
 
 const priorityCfg = computed(() => TASK_PRIORITY[props.task.priority] || { color: '#6b7280' })
+
+function handleSelect() {
+  if (!props.task?.id) {
+    console.warn('[task-card] select task without id', props.task)
+  }
+  emit('select', props.task)
+}
 </script>
 
 <style lang="scss" scoped>

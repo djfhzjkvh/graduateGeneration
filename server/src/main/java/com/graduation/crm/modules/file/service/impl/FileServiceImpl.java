@@ -19,6 +19,9 @@ import java.time.format.DateTimeFormatter;
 import java.util.Base64;
 import java.util.UUID;
 
+/**
+ * 本地文件上传与读取服务。
+ */
 @Service
 @RequiredArgsConstructor
 public class FileServiceImpl implements FileService {
@@ -93,6 +96,43 @@ public class FileServiceImpl implements FileService {
         }
     }
 
+    @Override
+    public String readAudioAsBase64(Long id) {
+        SysFile sysFile = getEntity(id);
+        if (sysFile.getFileType() == null || !sysFile.getFileType().startsWith("audio/")) {
+            throw new BusinessException("当前文件不是音频，不能用于语音智能识别");
+        }
+        try {
+            File file = resolveLocalFile(sysFile);
+            byte[] bytes = Files.readAllBytes(file.toPath());
+            return Base64.getEncoder().encodeToString(bytes);
+        } catch (Exception e) {
+            throw new BusinessException("读取音频文件失败：" + e.getMessage());
+        }
+    }
+
+    @Override
+    public String resolveAudioFormat(Long id) {
+        SysFile sysFile = getEntity(id);
+        String fileName = sysFile.getFileName() == null ? "" : sysFile.getFileName().toLowerCase();
+        String fileType = sysFile.getFileType() == null ? "" : sysFile.getFileType().toLowerCase();
+        if (fileName.endsWith(".mp3") || fileType.contains("mpeg")) {
+            return "mp3";
+        }
+        if (fileName.endsWith(".m4a") || fileType.contains("mp4")) {
+            return "m4a";
+        }
+        if (fileName.endsWith(".ogg") || fileType.contains("ogg")) {
+            return "ogg";
+        }
+        return "wav";
+    }
+
+    @Override
+    public File resolveLocalFile(Long id) {
+        return resolveLocalFile(getEntity(id));
+    }
+
     private File resolveLocalFile(SysFile sysFile) {
         String prefix = fileProperties.getAccessPrefix();
         String relativePath = sysFile.getFileUrl().startsWith(prefix)
@@ -117,4 +157,3 @@ public class FileServiceImpl implements FileService {
         return vo;
     }
 }
-

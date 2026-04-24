@@ -126,6 +126,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { customerApi } from '@/api/customer'
+import { logBusiness, errorBusiness } from '@/utils/logger'
 
 const defaultColor = '#C9A84C'
 const loading = ref(false)
@@ -178,7 +179,7 @@ function normalizeColor(color) {
 }
 
 function logStep(action, payload = {}) {
-  console.info(`[customer-tags] ${action}`, payload)
+  logBusiness('customer-tags', action, payload)
 }
 
 async function fetchTags() {
@@ -189,7 +190,7 @@ async function fetchTags() {
     tags.value = Array.isArray(data) ? data : []
     logStep('fetch:success', { count: tags.value.length })
   } catch (error) {
-    console.error('[customer-tags] fetch:failed', error)
+    errorBusiness('customer-tags', 'fetch:failed', error)
     throw error
   } finally {
     loading.value = false
@@ -248,7 +249,7 @@ async function handleSubmit() {
     dialogVisible.value = false
     await fetchTags()
   } catch (error) {
-    console.error('[customer-tags] submit:failed', error)
+    errorBusiness('customer-tags', 'submit:failed', error)
     throw error
   } finally {
     submitLoading.value = false

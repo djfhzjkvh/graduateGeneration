@@ -7,6 +7,7 @@ import com.graduation.crm.modules.task.dto.TaskDelayDTO;
 import com.graduation.crm.modules.task.dto.TaskQueryDTO;
 import com.graduation.crm.modules.task.dto.TaskRemindLogQueryDTO;
 import com.graduation.crm.modules.task.service.TaskService;
+import com.graduation.crm.modules.task.vo.TaskDetailVO;
 import com.graduation.crm.modules.task.vo.TaskRemindLogVO;
 import com.graduation.crm.modules.task.vo.TaskVO;
 import io.swagger.v3.oas.annotations.Operation;
@@ -42,6 +43,15 @@ public class AppTaskController {
     @Operation(summary = "分页查询任务")
     public Result<PageResult<TaskVO>> page(TaskQueryDTO queryDTO) {
         return Result.success(taskService.page(queryDTO));
+    }
+
+    /**
+     * 查询任务详情，移动端详情页可一次拿到提醒和转派轨迹。
+     */
+    @GetMapping("/{id}")
+    @Operation(summary = "任务详情")
+    public Result<TaskDetailVO> detail(@PathVariable Long id) {
+        return Result.success(taskService.detail(id));
     }
 
     /**
