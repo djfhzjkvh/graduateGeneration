@@ -9,6 +9,7 @@ import com.graduation.crm.modules.customer.dto.CustomerQueryDTO;
 import com.graduation.crm.modules.customer.dto.CustomerUpdateDTO;
 import com.graduation.crm.modules.customer.entity.Customer;
 import com.graduation.crm.modules.customer.mapper.CustomerMapper;
+import com.graduation.crm.modules.customer.mapper.CustomerTagMapper;
 import com.graduation.crm.modules.customer.service.CustomerService;
 import com.graduation.crm.modules.customer.vo.CustomerDetailVO;
 import com.graduation.crm.modules.customer.vo.CustomerListVO;
@@ -23,6 +24,7 @@ import org.springframework.stereotype.Service;
 public class CustomerServiceImpl implements CustomerService {
 
     private final CustomerMapper customerMapper;
+    private final CustomerTagMapper customerTagMapper;
 
     @Override
     public PageResult<CustomerListVO> page(CustomerQueryDTO queryDTO) {
@@ -40,12 +42,14 @@ public class CustomerServiceImpl implements CustomerService {
         if (detail == null) {
             throw new BusinessException("客户不存在");
         }
+        // 客户详情单独补充标签列表，避免主查询因多标签导致客户信息重复。
+        detail.setTagNames(customerTagMapper.selectTagNamesByCustomerId(id));
         log.debug("Customer detail query finished, id={}", id);
         return detail;
     }
 
     @Override
-    public void create(CustomerCreateDTO dto) {
+    public Long create(CustomerCreateDTO dto) {
         Customer customer = new Customer();
         BeanUtils.copyProperties(dto, customer);
         // 新建线索统一从 NEW 状态开始，热度分后续由规则或 AI 模块刷新。
@@ -54,6 +58,7 @@ public class CustomerServiceImpl implements CustomerService {
         customer.setDeleted(0);
         customerMapper.insert(customer);
         log.info("Customer created, id={}", customer.getId());
+        return customer.getId();
     }
 
     @Override

@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.graduation.crm.modules.heat.mapper.HeatMapper">
+
+    <insert id="upsertHeatLog" parameterType="com.graduation.crm.modules.heat.entity.CustomerHeatLog">
+        INSERT INTO crm_customer_heat_log (
+            customer_id,
+            score,
+            score_date,
+            reply_speed_score,
+            ask_depth_score,
+            bargain_score,
+            visit_score,
+            sentiment_score,
+            total_reason
+        ) VALUES (
+            #{customerId},
+            #{score},
+            #{scoreDate},
+            #{replySpeedScore},
+            #{askDepthScore},
+            #{bargainScore},
+            #{visitScore},
+            #{sentimentScore},
+            #{totalReason}
+        )
+        ON DUPLICATE KEY UPDATE
+            score = VALUES(score),
+            reply_speed_score = VALUES(reply_speed_score),
+            ask_depth_score = VALUES(ask_depth_score),
+            bargain_score = VALUES(bargain_score),
+            visit_score = VALUES(visit_score),
+            sentiment_score = VALUES(sentiment_score),
+            total_reason = VALUES(total_reason)
+    </insert>
+
+    <select id="selectLatestHeat" resultType="com.graduation.crm.modules.heat.vo.HeatDetailVO">
+        SELECT
+            h.customer_id,
+            c.customer_name,
+            h.score,
+            h.score_date,
+            h.reply_speed_score,
+            h.ask_depth_score,
+            h.bargain_score,
+            h.visit_score,
+            h.sentiment_score,
+            h.total_reason AS reason
+        FROM crm_customer_heat_log h
+        INNER JOIN crm_customer c ON h.customer_id = c.id
+        WHERE h.customer_id = #{customerId}
+        ORDER BY h.score_date DESC, h.created_at DESC
+        LIMIT 1
+    </select>
+
+    <select id="selectHighIntentCustomers" resultType="com.graduation.crm.modules.heat.vo.HighIntentCustomerVO">
+        SELECT
+            c.id AS customer_id,
+            c.customer_name,
+            c.mobile,
+            c.status,
+            c.intent_level,
+            c.heat_score,
+            advisor.nickname AS advisor_name,
+            manager.nickname AS manager_name
+        FROM crm_customer c
+        LEFT JOIN sys_user advisor ON c.advisor_id = advisor.id
+        LEFT JOIN sys_user manager ON c.manager_id = manager.id
+        WHERE c.deleted = 0
+          AND c.heat_score &gt;= 80
+        <if test="advisorId != null">
+            AND c.advisor_id = #{advisorId}
+        </if>
+        <if test="managerId != null">
+            AND c.manager_id = #{managerId}
+        </if>
+        ORDER BY c.heat_score DESC, c.updated_at DESC
+    </select>
+
+    <select id="countRecentFollows" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM crm_follow_record
+        WHERE customer_id = #{customerId}
+          AND created_at &gt;= DATE_SUB(NOW(), INTERVAL #{days} DAY)
+    </select>
+
+    <select id="countFollowKeywordHits" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM crm_follow_record
+        WHERE customer_id = #{customerId}
+          AND (
+              content LIKE '%看房%'
+              OR content LIKE '%到访%'
+              OR content LIKE '%预算%'
+              OR content LIKE '%优惠%'
+              OR content LIKE '%首付%'
+              OR content LIKE '%贷款%'
+              OR content LIKE '%户型%'
+              OR content LIKE '%周末%'
+          )
+    </select>
+
+    <select id="countVisitOrDealFollows" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM crm_follow_record
+        WHERE customer_id = #{customerId}
+          AND follow_result IN ('VISITED', 'DEAL')
+    </select>
+
+    <select id="avgSentimentScore" resultType="java.math.BigDecimal">
+        SELECT AVG(sentiment_score)
+        FROM crm_follow_record
+        WHERE customer_id = #{customerId}
+          AND sentiment_score IS NOT NULL
+    </select>
+</mapper>

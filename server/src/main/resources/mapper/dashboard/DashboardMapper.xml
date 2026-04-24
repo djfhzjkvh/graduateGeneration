@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.graduation.crm.modules.dashboard.mapper.DashboardMapper">
+
+    <select id="countTodayTasks" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM crm_task
+        WHERE deleted = 0
+          AND task_date = CURDATE()
+        <if test="ownerId != null">
+          AND owner_id = #{ownerId}
+        </if>
+    </select>
+
+    <select id="countOverdueTasks" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM crm_task
+        WHERE deleted = 0
+          AND status IN ('PENDING', 'OVERDUE')
+          AND task_date &lt; CURDATE()
+        <if test="ownerId != null">
+          AND owner_id = #{ownerId}
+        </if>
+    </select>
+
+    <select id="countHighIntentCustomers" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM crm_customer
+        WHERE deleted = 0
+          AND heat_score &gt;= 80
+        <if test="advisorId != null">
+          AND advisor_id = #{advisorId}
+        </if>
+        <if test="managerId != null">
+          AND manager_id = #{managerId}
+        </if>
+    </select>
+
+    <select id="countNewCustomers" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM crm_customer
+        WHERE deleted = 0
+          AND DATE(created_at) = CURDATE()
+        <if test="advisorId != null">
+          AND advisor_id = #{advisorId}
+        </if>
+        <if test="managerId != null">
+          AND manager_id = #{managerId}
+        </if>
+    </select>
+
+    <select id="countCustomers" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM crm_customer
+        WHERE deleted = 0
+        <if test="advisorId != null">
+          AND advisor_id = #{advisorId}
+        </if>
+        <if test="managerId != null">
+          AND manager_id = #{managerId}
+        </if>
+        <if test="status != null and status != ''">
+          AND status = #{status}
+        </if>
+    </select>
+
+    <select id="countPendingTasks" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM crm_task t
+        LEFT JOIN crm_customer c ON t.customer_id = c.id
+        WHERE t.deleted = 0
+          AND t.status = 'PENDING'
+        <if test="ownerId != null">
+          AND t.owner_id = #{ownerId}
+        </if>
+        <if test="managerId != null">
+          AND c.manager_id = #{managerId}
+        </if>
+    </select>
+
+    <select id="selectTodayTasks" resultType="com.graduation.crm.modules.dashboard.vo.SimpleTaskVO">
+        SELECT
+            t.id,
+            t.customer_id,
+            c.customer_name,
+            t.title,
+            t.status,
+            t.priority,
+            t.task_date,
+            t.task_time
+        FROM crm_task t
+        LEFT JOIN crm_customer c ON t.customer_id = c.id
+        WHERE t.deleted = 0
+          AND t.task_date = CURDATE()
+        <if test="ownerId != null">
+          AND t.owner_id = #{ownerId}
+        </if>
+        ORDER BY t.task_time ASC, t.created_at DESC
+        LIMIT #{limit}
+    </select>
+
+    <select id="selectHighIntentCustomers" resultType="com.graduation.crm.modules.dashboard.vo.SimpleCustomerVO">
+        SELECT
+            c.id,
+            c.customer_name,
+            c.mobile,
+            c.status,
+            c.intent_level,
+            c.heat_score,
+            u.nickname AS advisor_name
+        FROM crm_customer c
+        LEFT JOIN sys_user u ON c.advisor_id = u.id
+        WHERE c.deleted = 0
+          AND c.heat_score &gt;= 80
+        <if test="advisorId != null">
+          AND c.advisor_id = #{advisorId}
+        </if>
+        <if test="managerId != null">
+          AND c.manager_id = #{managerId}
+        </if>
+        ORDER BY c.heat_score DESC, c.updated_at DESC
+        LIMIT #{limit}
+    </select>
+
+    <select id="selectAdvisorRank" resultType="com.graduation.crm.modules.dashboard.vo.AdvisorRankVO">
+        SELECT
+            u.id AS advisor_id,
+            u.nickname AS advisor_name,
+            COUNT(DISTINCT c.id) AS customer_count,
+            COUNT(DISTINCT CASE WHEN c.heat_score &gt;= 80 THEN c.id END) AS high_intent_customer_count,
+            COUNT(DISTINCT CASE WHEN t.status = 'PENDING' THEN t.id END) AS pending_task_count,
+            COUNT(DISTINCT CASE WHEN c.status = 'DEAL' THEN c.id END) AS deal_customer_count
+        FROM sys_user u
+        LEFT JOIN crm_customer c ON c.advisor_id = u.id AND c.deleted = 0
+        LEFT JOIN crm_task t ON t.owner_id = u.id AND t.deleted = 0
+        WHERE u.deleted = 0
+          AND u.status = 1
+          AND u.manager_id = #{managerId}
+        GROUP BY u.id, u.nickname
+        ORDER BY high_intent_customer_count DESC, customer_count DESC
+    </select>
+
+    <select id="selectDailyStats" resultType="com.graduation.crm.modules.dashboard.vo.DailyStatVO">
+        SELECT
+            stat_date,
+            SUM(new_customer_count) AS new_customer_count,
+            SUM(high_intent_count) AS high_intent_count,
+            SUM(pending_task_count) AS pending_task_count,
+            SUM(expected_amount) AS expected_amount,
+            SUM(forget_task_count) AS forget_task_count
+        FROM report_daily_stat
+        GROUP BY stat_date
+        ORDER BY stat_date DESC
+        LIMIT #{limit}
+    </select>
+
+    <select id="selectTaskStatusStats" resultType="com.graduation.crm.modules.dashboard.vo.TaskStatusStatVO">
+        SELECT
+            status,
+            COUNT(*) AS count
+        FROM crm_task
+        WHERE deleted = 0
+        GROUP BY status
+        ORDER BY count DESC
+    </select>
+</mapper>
+

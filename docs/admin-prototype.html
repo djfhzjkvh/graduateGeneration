@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>购房CRM · 后台管理原型</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{
+      --navy-950:#080f1e;--navy-900:#0d1424;--navy-800:#162038;--navy-700:#1e2d4a;--navy-600:#253856;
+      --gold-500:#c9a84c;--gold-400:#dfc06b;--gold-300:#edd98e;
+      --surface-50:#f8f9fc;--surface-100:#f1f4f9;--surface-200:#e8ecf4;
+      --white:#ffffff;--text-900:#0f172a;--text-700:#334155;--text-500:#64748b;--text-400:#94a3b8;
+      --border:#e2e8f0;--border-light:#f1f5f9;
+      --success:#10b981;--warning:#f59e0b;--danger:#ef4444;--info:#3b82f6;
+      --radius-sm:6px;--radius-md:10px;--radius-lg:14px;
+      --shadow-sm:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+      --shadow-md:0 4px 12px rgba(0,0,0,.08),0 2px 6px rgba(0,0,0,.05);
+      --shadow-lg:0 10px 30px rgba(0,0,0,.12),0 4px 10px rgba(0,0,0,.08);
+    }
+    body{font-family:'Sora','Noto Sans SC',sans-serif;background:var(--surface-50);color:var(--text-900);font-size:14px;line-height:1.5}
+
+    /* ── ROUTING ── */
+    .page{display:none}
+    .page.active{display:flex}
+
+    /* ══════════════════════════════════
+       LOGIN PAGE
+    ══════════════════════════════════ */
+    #page-login{
+      min-height:100vh;background:var(--navy-900);
+      align-items:center;justify-content:center;
+      position:relative;overflow:hidden;
+    }
+    #page-login::before{
+      content:'';position:absolute;inset:0;
+      background:radial-gradient(ellipse 80% 60% at 20% 80%,rgba(201,168,76,.12) 0%,transparent 60%),
+                 radial-gradient(ellipse 60% 80% at 80% 20%,rgba(30,45,74,.6) 0%,transparent 60%);
+    }
+    #page-login::after{
+      content:'';position:absolute;inset:0;
+      background-image:linear-gradient(rgba(201,168,76,.04) 1px,transparent 1px),
+                       linear-gradient(90deg,rgba(201,168,76,.04) 1px,transparent 1px);
+      background-size:40px 40px;
+    }
+    .login-card{
+      position:relative;z-index:1;
+      background:var(--navy-800);border:1px solid rgba(201,168,76,.15);
+      border-radius:var(--radius-lg);padding:48px;width:420px;
+      box-shadow:0 24px 60px rgba(0,0,0,.4),0 0 0 1px rgba(255,255,255,.03);
+    }
+    .login-logo{display:flex;align-items:center;gap:12px;margin-bottom:36px}
+    .login-logo-mark{
+      width:44px;height:44px;background:linear-gradient(135deg,var(--gold-500),var(--gold-300));
+      border-radius:10px;display:flex;align-items:center;justify-content:center;
+      font-size:18px;font-weight:700;color:var(--navy-900);flex-shrink:0;
+    }
+    .login-logo-title{font-size:17px;font-weight:600;color:#fff;letter-spacing:.5px}
+    .login-logo-sub{font-size:11px;color:var(--text-400);letter-spacing:.5px;margin-top:1px}
+    .login-heading{font-size:24px;font-weight:600;color:#fff;margin-bottom:8px}
+    .login-sub{font-size:13px;color:var(--text-400);margin-bottom:32px}
+    .form-group{margin-bottom:20px}
+    .form-label{display:block;font-size:11px;font-weight:500;color:var(--text-400);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px}
+    .form-input{
+      width:100%;padding:12px 16px;background:rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.1);border-radius:var(--radius-sm);
+      color:#fff;font-size:14px;font-family:inherit;transition:border-color .2s,background .2s;outline:none;
+    }
+    .form-input::placeholder{color:rgba(255,255,255,.25)}
+    .form-input:focus{border-color:var(--gold-500);background:rgba(255,255,255,.07)}
+    .btn-login{
+      width:100%;padding:13px;background:linear-gradient(135deg,var(--gold-500),var(--gold-400));
+      border:none;border-radius:var(--radius-sm);color:var(--navy-900);
+      font-size:15px;font-weight:600;font-family:inherit;cursor:pointer;margin-top:8px;
+      transition:opacity .2s,transform .1s;letter-spacing:.3px;
+    }
+    .btn-login:hover{opacity:.9}
+    .btn-login:active{transform:scale(.99)}
+
+    /* ══════════════════════════════════
+       MAIN LAYOUT
+    ══════════════════════════════════ */
+    #page-main{min-height:100vh;flex-direction:row}
+
+    /* SIDEBAR */
+    .sidebar{
+      width:240px;min-height:100vh;background:var(--navy-900);flex-shrink:0;
+      display:flex;flex-direction:column;position:fixed;left:0;top:0;bottom:0;z-index:100;
+    }
+    .sidebar-header{padding:22px 18px 18px;border-bottom:1px solid rgba(255,255,255,.06)}
+    .sidebar-logo{display:flex;align-items:center;gap:10px}
+    .sidebar-logo-mark{
+      width:34px;height:34px;background:linear-gradient(135deg,var(--gold-500),var(--gold-300));
+      border-radius:8px;display:flex;align-items:center;justify-content:center;
+      font-size:14px;font-weight:700;color:var(--navy-900);flex-shrink:0;
+    }
+    .sidebar-logo-name{font-size:14px;font-weight:600;color:#fff;letter-spacing:.3px}
+    .sidebar-logo-sub{font-size:10px;color:var(--text-400);letter-spacing:.5px}
+    .sidebar-nav{flex:1;padding:14px 10px;overflow-y:auto}
+    .nav-section{margin-bottom:22px}
+    .nav-section-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.25);padding:0 8px;margin-bottom:5px}
+    .nav-item{
+      display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:var(--radius-sm);
+      cursor:pointer;transition:background .15s,color .15s;color:rgba(255,255,255,.52);
+      font-size:13px;font-weight:400;user-select:none;
+    }
+    .nav-item:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.85)}
+    .nav-item.active{background:rgba(201,168,76,.15);color:var(--gold-400)}
+    .nav-icon{width:17px;height:17px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px}
+    .nav-badge{
+      margin-left:auto;background:var(--danger);color:#fff;
+      font-size:10px;font-weight:600;padding:1px 6px;border-radius:10px;min-width:18px;text-align:center;
+    }
+    .sidebar-footer{padding:14px 10px;border-top:1px solid rgba(255,255,255,.06)}
+    .sidebar-user{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:var(--radius-sm);cursor:pointer;transition:background .15s}
+    .sidebar-user:hover{background:rgba(255,255,255,.06)}
+    .avatar{
+      width:32px;height:32px;border-radius:50%;
+      background:linear-gradient(135deg,var(--gold-500),var(--navy-600));
+      display:flex;align-items:center;justify-content:center;
+      font-size:12px;font-weight:600;color:#fff;flex-shrink:0;
+    }
+    .user-name{font-size:12.5px;font-weight:500;color:#fff}
+    .user-role{font-size:11px;color:var(--text-400)}
+
+    /* MAIN */
+    .main-content{margin-left:240px;flex:1;display:flex;flex-direction:column;min-height:100vh}
+
+    /* HEADER */
+    .header{
+      height:58px;background:var(--white);border-bottom:1px solid var(--border);
+      display:flex;align-items:center;padding:0 24px;gap:16px;
+      position:sticky;top:0;z-index:50;box-shadow:var(--shadow-sm);
+    }
+    .breadcrumb{display:flex;align-items:center;gap:6px;flex:1;font-size:13px;color:var(--text-500)}
+    .breadcrumb-sep{color:var(--text-400)}
+    .breadcrumb-current{color:var(--text-700);font-weight:500}
+    .header-actions{display:flex;align-items:center;gap:10px}
+    .header-btn{
+      width:34px;height:34px;border-radius:var(--radius-sm);border:1px solid var(--border);
+      background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;
+      font-size:15px;color:var(--text-500);position:relative;transition:background .15s;
+    }
+    .header-btn:hover{background:var(--surface-100)}
+    .header-btn .dot{position:absolute;top:6px;right:6px;width:6px;height:6px;background:var(--danger);border-radius:50%;border:1.5px solid white}
+    .header-avatar{
+      width:32px;height:32px;border-radius:50%;
+      background:linear-gradient(135deg,var(--gold-500),var(--navy-600));
+      display:flex;align-items:center;justify-content:center;
+      font-size:11px;font-weight:600;color:#fff;cursor:pointer;
+    }
+
+    /* CONTENT */
+    .content{flex:1;padding:22px 24px}
+    .view{display:none}
+    .view.active{display:block}
+    .page-title{font-size:20px;font-weight:600;color:var(--text-900);margin-bottom:3px}
+    .page-desc{font-size:13px;color:var(--text-500);margin-bottom:22px}
+
+    /* ── DASHBOARD ── */
+    .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+    .stat-card{
+      background:var(--white);border-radius:var(--radius-md);padding:18px 20px;
+      box-shadow:var(--shadow-sm);border:1px solid var(--border);position:relative;overflow:hidden;
+      transition:box-shadow .2s,transform .2s;
+    }
+    .stat-card:hover{box-shadow:var(--shadow-md);transform:translateY(-1px)}
+    .stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+    .stat-card.gold::before{background:linear-gradient(90deg,var(--gold-500),var(--gold-300))}
+    .stat-card.blue::before{background:linear-gradient(90deg,#3b82f6,#60a5fa)}
+    .stat-card.green::before{background:linear-gradient(90deg,#10b981,#34d399)}
+    .stat-card.red::before{background:linear-gradient(90deg,#ef4444,#f87171)}
+    .stat-icon{width:38px;height:38px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-size:17px;margin-bottom:14px}
+    .stat-card.gold .stat-icon{background:rgba(201,168,76,.12)}
+    .stat-card.blue .stat-icon{background:rgba(59,130,246,.1)}
+    .stat-card.green .stat-icon{background:rgba(16,185,129,.1)}
+    .stat-card.red .stat-icon{background:rgba(239,68,68,.1)}
+    .stat-value{font-size:26px;font-weight:700;color:var(--text-900);line-height:1;margin-bottom:5px;font-family:'Sora',sans-serif}
+    .stat-label{font-size:12.5px;color:var(--text-500)}
+    .stat-change{font-size:11.5px;margin-top:7px;display:flex;align-items:center;gap:3px}
+    .stat-change.up{color:var(--success)}
+    .stat-change.down{color:var(--danger)}
+    .dashboard-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    .card{background:var(--white);border-radius:var(--radius-md);border:1px solid var(--border);box-shadow:var(--shadow-sm)}
+    .card-header{padding:15px 18px;border-bottom:1px solid var(--border-light);display:flex;align-items:center;justify-content:space-between}
+    .card-title{font-size:13.5px;font-weight:600;color:var(--text-900)}
+    .card-action{font-size:12px;color:var(--gold-500);cursor:pointer;text-decoration:none}
+    .card-body{padding:14px 18px}
+    .recent-list{list-style:none}
+    .recent-item{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border-light)}
+    .recent-item:last-child{border-bottom:none}
+    .recent-avatar{
+      width:30px;height:30px;border-radius:50%;
+      background:linear-gradient(135deg,var(--navy-700),var(--navy-600));
+      display:flex;align-items:center;justify-content:center;
+      font-size:11px;font-weight:600;color:var(--gold-400);flex-shrink:0;
+    }
+    .recent-name{font-size:13px;font-weight:500;color:var(--text-700)}
+    .recent-meta{font-size:11.5px;color:var(--text-400);margin-top:1px}
+    .recent-time{margin-left:auto;font-size:11px;color:var(--text-400);white-space:nowrap}
+    .task-stat-row{display:flex;align-items:center;gap:14px;padding:10px 0;border-bottom:1px solid var(--border-light)}
+    .task-stat-row:last-child{border-bottom:none}
+    .task-stat-bar{flex:1;height:5px;background:var(--surface-100);border-radius:3px;overflow:hidden}
+    .task-stat-fill{height:100%;border-radius:3px}
+
+    /* ── FILTERS ── */
+    .filter-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius-md);padding:14px 18px;margin-bottom:14px;box-shadow:var(--shadow-sm)}
+    .filter-row{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
+    .filter-group{display:flex;flex-direction:column;gap:5px}
+    .filter-label{font-size:10.5px;font-weight:500;text-transform:uppercase;letter-spacing:.7px;color:var(--text-400)}
+    .filter-input,.filter-select{height:32px;padding:0 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;color:var(--text-700);background:var(--white);outline:none;font-family:inherit;transition:border-color .15s}
+    .filter-input:focus,.filter-select:focus{border-color:var(--gold-500)}
+    .filter-input{min-width:190px}
+    .filter-select{min-width:120px}
+    .btn{height:32px;padding:0 14px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;font-family:inherit;cursor:pointer;border:none;display:inline-flex;align-items:center;gap:5px;transition:opacity .15s,background .15s;white-space:nowrap}
+    .btn-primary{background:linear-gradient(135deg,var(--gold-500),var(--gold-400));color:var(--navy-900)}
+    .btn-primary:hover{opacity:.9}
+    .btn-ghost{background:transparent;color:var(--text-500);border:1px solid var(--border)}
+    .btn-ghost:hover{background:var(--surface-100)}
+    .btn-danger{background:transparent;color:var(--danger);border:1px solid rgba(239,68,68,.3)}
+    .btn-danger:hover{background:rgba(239,68,68,.05)}
+    .btn-sm{height:26px;padding:0 10px;font-size:12px}
+
+    /* ── TABLES ── */
+    .table-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius-md);box-shadow:var(--shadow-sm);overflow:hidden}
+    .table-header{padding:13px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px}
+    .table-title{font-size:13.5px;font-weight:600;color:var(--text-900)}
+    .table-count{font-size:12px;color:var(--text-400);background:var(--surface-100);padding:2px 8px;border-radius:10px}
+    .table-actions{display:flex;gap:7px;margin-left:auto}
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    th{padding:10px 14px;text-align:left;font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.7px;color:var(--text-400);background:var(--surface-50);border-bottom:1px solid var(--border);white-space:nowrap}
+    td{padding:12px 14px;border-bottom:1px solid var(--border-light);color:var(--text-700);vertical-align:middle}
+    tr:last-child td{border-bottom:none}
+    tr:hover td{background:var(--surface-50)}
+    .cell-primary{font-weight:500;color:var(--text-900)}
+    .cell-mono{font-family:'Sora',monospace;font-size:12px}
+
+    /* BADGES */
+    .badge{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500;white-space:nowrap}
+    .badge::before{content:'';width:4px;height:4px;border-radius:50%;background:currentColor;opacity:.7}
+    .badge-success{background:rgba(16,185,129,.1);color:#059669}
+    .badge-warning{background:rgba(245,158,11,.1);color:#d97706}
+    .badge-danger{background:rgba(239,68,68,.1);color:#dc2626}
+    .badge-info{background:rgba(59,130,246,.1);color:#2563eb}
+    .badge-gray{background:var(--surface-100);color:var(--text-500)}
+    .badge-gold{background:rgba(201,168,76,.12);color:#946e10}
+    .badge-purple{background:rgba(139,92,246,.1);color:#7c3aed}
+
+    /* HEAT */
+    .heat-bar{display:flex;align-items:center;gap:6px}
+    .heat-dots{display:flex;gap:2px}
+    .heat-dot{width:7px;height:7px;border-radius:50%}
+    .heat-dot.fill{background:var(--gold-500)}
+    .heat-dot.empty{background:var(--surface-200)}
+
+    /* PAGINATION */
+    .pagination{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-top:1px solid var(--border-light);font-size:12.5px;color:var(--text-500)}
+    .pagination-pages{display:flex;gap:3px}
+    .page-btn{width:28px;height:28px;border-radius:var(--radius-sm);border:1px solid var(--border);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12.5px;color:var(--text-500);transition:background .1s,border-color .1s;font-family:inherit}
+    .page-btn:hover{background:var(--surface-100)}
+    .page-btn.active{background:var(--navy-900);color:#fff;border-color:var(--navy-900)}
+
+    /* ROW ACTIONS */
+    .row-actions{display:flex;gap:5px;opacity:0;transition:opacity .15s}
+    tr:hover .row-actions{opacity:1}
+
+    /* DEPT TREE */
+    .dept-layout{display:grid;grid-template-columns:300px 1fr;gap:14px;align-items:start}
+    .tree-node-row{display:flex;align-items:center;gap:7px;padding:8px 10px;border-radius:var(--radius-sm);cursor:pointer;transition:background .1s;font-size:13px;color:var(--text-700)}
+    .tree-node-row:hover{background:var(--surface-100)}
+    .tree-node-row.active{background:rgba(201,168,76,.1);color:var(--navy-800);font-weight:500}
+    .tree-children{padding-left:20px}
+
+    /* MODAL */
+    .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:center;justify-content:center}
+    .modal-overlay.open{display:flex}
+    .modal{background:var(--white);border-radius:var(--radius-lg);width:480px;box-shadow:var(--shadow-lg);animation:modal-in .2s ease}
+    @keyframes modal-in{from{opacity:0;transform:scale(.96) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}
+    .modal-header{padding:18px 22px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+    .modal-title{font-size:15px;font-weight:600}
+    .modal-close{width:26px;height:26px;border-radius:5px;border:none;background:transparent;cursor:pointer;font-size:15px;color:var(--text-400);display:flex;align-items:center;justify-content:center;transition:background .1s}
+    .modal-close:hover{background:var(--surface-100)}
+    .modal-body{padding:18px 22px}
+    .modal-footer{padding:14px 22px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    .form-field{margin-bottom:14px}
+    .form-field .form-label{display:block;font-size:11px;font-weight:500;color:var(--text-500);text-transform:uppercase;letter-spacing:.7px;margin-bottom:5px}
+    .form-field input,.form-field select{width:100%;height:34px;padding:0 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;font-family:inherit;color:var(--text-700);outline:none;transition:border-color .15s}
+    .form-field input:focus,.form-field select:focus{border-color:var(--gold-500)}
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════ LOGIN ═══════════════════ -->
+<div id="page-login" class="page active">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="login-logo-mark">购</div>
+      <div>
+        <div class="login-logo-title">购房 CRM</div>
+        <div class="login-logo-sub">客户意向跟进提醒系统</div>
+      </div>
+    </div>
+    <div class="login-heading">欢迎回来</div>
+    <div class="login-sub">请使用管理员账号登录后台管理端</div>
+    <div class="form-group">
+      <label class="form-label">用户名</label>
+      <input class="form-input" type="text" placeholder="请输入用户名" value="admin">
+    </div>
+    <div class="form-group">
+      <label class="form-label">密码</label>
+      <input class="form-input" type="password" placeholder="请输入密码" value="••••••••">
+    </div>
+    <button class="btn-login" onclick="goToMain()">登 录</button>
+  </div>
+</div>
+
+<!-- ═══════════════════ MAIN ═══════════════════ -->
+<div id="page-main" class="page">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">
+        <div class="sidebar-logo-mark">购</div>
+        <div>
+          <div class="sidebar-logo-name">购房 CRM</div>
+          <div class="sidebar-logo-sub">ADMIN PANEL</div>
+        </div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-section-label">工作台</div>
+        <div class="nav-item active" data-view="dashboard" onclick="switchView(this,'dashboard','工作台','数据概览')">
+          <span class="nav-icon">⊞</span>数据概览
+        </div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-label">客户中心</div>
+        <div class="nav-item" data-view="customer-list" onclick="switchView(this,'customer-list','客户中心','客户列表')">
+          <span class="nav-icon">👥</span>客户列表
+        </div>
+        <div class="nav-item" data-view="high-intent" onclick="switchView(this,'high-intent','客户中心','高意向客户')">
+          <span class="nav-icon">⭐</span>高意向客户<span class="nav-badge">18</span>
+        </div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-label">跟进任务</div>
+        <div class="nav-item" data-view="task-list" onclick="switchView(this,'task-list','跟进任务','任务列表')">
+          <span class="nav-icon">☑</span>任务列表
+        </div>
+        <div class="nav-item" data-view="task-today" onclick="switchView(this,'task-today','跟进任务','今日任务')">
+          <span class="nav-icon">◷</span>今日任务<span class="nav-badge">7</span>
+        </div>
+        <div class="nav-item" data-view="task-overdue" onclick="switchView(this,'task-overdue','跟进任务','逾期任务')">
+          <span class="nav-icon">⚠</span>逾期任务<span class="nav-badge">3</span>
+        </div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-label">组织管理</div>
+        <div class="nav-item" data-view="user-list" onclick="switchView(this,'user-list','组织管理','用户管理')">
+          <span class="nav-icon">👤</span>用户管理
+        </div>
+        <div class="nav-item" data-view="role-list" onclick="switchView(this,'role-list','组织管理','角色管理')">
+          <span class="nav-icon">🔑</span>角色管理
+        </div>
+        <div class="nav-item" data-view="dept-tree" onclick="switchView(this,'dept-tree','组织管理','部门管理')">
+          <span class="nav-icon">🏢</span>部门管理
+        </div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-label">系统</div>
+        <div class="nav-item" data-view="profile" onclick="switchView(this,'profile','系统','个人信息')">
+          <span class="nav-icon">⚙</span>个人信息
+        </div>
+        <div class="nav-item" onclick="goToLogin()">
+          <span class="nav-icon">⏏</span>退出登录
+        </div>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="avatar">管</div>
+        <div>
+          <div class="user-name">系统管理员</div>
+          <div class="user-role">ADMIN · 销售一部</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content">
+    <header class="header">
+      <div class="breadcrumb">
+        <span>后台管理</span>
+        <span class="breadcrumb-sep">›</span>
+        <span id="bc-parent">工作台</span>
+        <span class="breadcrumb-sep">›</span>
+        <span class="breadcrumb-current" id="bc-current">数据概览</span>
+      </div>
+      <div class="header-actions">
+        <button class="header-btn">🔔<span class="dot"></span></button>
+        <div class="header-avatar">管</div>
+      </div>
+    </header>
+
+    <div class="content">
+
+      <!-- ── DASHBOARD ── -->
+      <div id="view-dashboard" class="view active">
+        <div class="page-title">数据概览</div>
+        <div class="page-desc">今日概况 · 2026年4月24日 星期五</div>
+        <div class="stat-grid">
+          <div class="stat-card gold">
+            <div class="stat-icon">👥</div>
+            <div class="stat-value">1,284</div>
+            <div class="stat-label">客户总数</div>
+            <div class="stat-change up">↑ 今日新增 12</div>
+          </div>
+          <div class="stat-card blue">
+            <div class="stat-icon">⭐</div>
+            <div class="stat-value">186</div>
+            <div class="stat-label">高意向客户</div>
+            <div class="stat-change up">↑ 较昨日 +8</div>
+          </div>
+          <div class="stat-card green">
+            <div class="stat-icon">☑</div>
+            <div class="stat-value">47</div>
+            <div class="stat-label">今日任务</div>
+            <div class="stat-change up">↑ 已完成 23</div>
+          </div>
+          <div class="stat-card red">
+            <div class="stat-icon">⚠</div>
+            <div class="stat-value">13</div>
+            <div class="stat-label">逾期任务</div>
+            <div class="stat-change down">↓ 需立即处理</div>
+          </div>
+        </div>
+        <div class="dashboard-grid">
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">最近跟进客户</span>
+              <a class="card-action" onclick="switchViewById('customer-list','客户中心','客户列表')">查看全部 →</a>
+            </div>
+            <div class="card-body">
+              <ul class="recent-list">
+                <li class="recent-item">
+                  <div class="recent-avatar">张</div>
+                  <div>
+                    <div class="recent-name">张晓美 <span class="badge badge-gold">高意向</span></div>
+                    <div class="recent-meta">186-1234-0001 · 微信 · 李明</div>
+                  </div>
+                  <div class="recent-time">10分钟前</div>
+                </li>
+                <li class="recent-item">
+                  <div class="recent-avatar">王</div>
+                  <div>
+                    <div class="recent-name">王建国 <span class="badge badge-info">跟进中</span></div>
+                    <div class="recent-meta">139-9876-0023 · 到访 · 陈静</div>
+                  </div>
+                  <div class="recent-time">1小时前</div>
+                </li>
+                <li class="recent-item">
+                  <div class="recent-avatar">刘</div>
+                  <div>
+                    <div class="recent-name">刘洋 <span class="badge badge-success">已成交</span></div>
+                    <div class="recent-meta">158-7654-3210 · 转介绍 · 王芳</div>
+                  </div>
+                  <div class="recent-time">3小时前</div>
+                </li>
+                <li class="recent-item">
+                  <div class="recent-avatar">赵</div>
+                  <div>
+                    <div class="recent-name">赵丽华 <span class="badge badge-warning">中意向</span></div>
+                    <div class="recent-meta">138-1234-5678 · 广告 · 刘伟</div>
+                  </div>
+                  <div class="recent-time">5小时前</div>
+                </li>
+                <li class="recent-item">
+                  <div class="recent-avatar">陈</div>
+                  <div>
+                    <div class="recent-name">陈思远 <span class="badge badge-gray">新客户</span></div>
+                    <div class="recent-meta">177-6543-2100 · 电话 · 张磊</div>
+                  </div>
+                  <div class="recent-time">昨天</div>
+                </li>
+              </ul>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">团队任务概览</span>
+              <a class="card-action" onclick="switchViewById('task-list','跟进任务','任务列表')">查看全部 →</a>
+            </div>
+            <div class="card-body">
+              <div style="margin-bottom:14px;font-size:13px;color:var(--text-500)">今日共 <b style="color:var(--text-900)">47</b> 个任务</div>
+              <div class="task-stat-row">
+                <div style="width:52px;font-size:12.5px;color:var(--text-700)">待处理</div>
+                <div class="task-stat-bar"><div class="task-stat-fill" style="width:51%;background:#f59e0b"></div></div>
+                <div style="width:28px;text-align:right;font-size:13px;font-weight:600;color:var(--text-700)">24</div>
+              </div>
+              <div class="task-stat-row">
+                <div style="width:52px;font-size:12.5px;color:var(--text-700)">已完成</div>
+                <div class="task-stat-bar"><div class="task-stat-fill" style="width:48%;background:#10b981"></div></div>
+                <div style="width:28px;text-align:right;font-size:13px;font-weight:600;color:var(--text-700)">23</div>
+              </div>
+              <div class="task-stat-row">
+                <div style="width:52px;font-size:12.5px;color:var(--text-700)">逾期</div>
+                <div class="task-stat-bar"><div class="task-stat-fill" style="width:27%;background:#ef4444"></div></div>
+                <div style="width:28px;text-align:right;font-size:13px;font-weight:600;color:var(--text-700)">13</div>
+              </div>
+              <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--border-light)">
+                <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.7px;color:var(--text-400);margin-bottom:10px">今日待处理</div>
+                <div style="display:flex;flex-direction:column;gap:8px">
+                  <div style="display:flex;align-items:center;gap:8px;font-size:13px">
+                    <span style="width:5px;height:5px;background:#ef4444;border-radius:50%;flex-shrink:0"></span>
+                    <span style="flex:1;color:var(--text-700)">张晓美 · 电话跟进</span>
+                    <span class="badge badge-danger">紧急</span>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:8px;font-size:13px">
+                    <span style="width:5px;height:5px;background:#f59e0b;border-radius:50%;flex-shrink:0"></span>
+                    <span style="flex:1;color:var(--text-700)">王建国 · 带看安排</span>
+                    <span class="badge badge-warning">高优先</span>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:8px;font-size:13px">
+                    <span style="width:5px;height:5px;background:#3b82f6;border-radius:50%;flex-shrink:0"></span>
+                    <span style="flex:1;color:var(--text-700)">刘芳 · 需求确认</span>
+                    <span class="badge badge-info">普通</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── CUSTOMER LIST ── -->
+      <div id="view-customer-list" class="view">
+        <div class="page-title">客户列表</div>
+        <div class="page-desc">管理全部客户信息，支持多条件筛选与查询</div>
+        <div class="filter-card">
+          <div class="filter-row">
+            <div class="filter-group">
+              <span class="filter-label">关键词</span>
+              <input class="filter-input" placeholder="客户姓名或手机号" type="text">
+            </div>
+            <div class="filter-group">
+              <span class="filter-label">客户状态</span>
+              <select class="filter-select">
+                <option>全部状态</option><option>新客户</option><option>跟进中</option>
+                <option>已到访</option><option>已成交</option><option>已流失</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <span class="filter-label">意向等级</span>
+              <select class="filter-select">
+                <option>全部等级</option><option>高</option><option>中</option><option>低</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <span class="filter-label">客户来源</span>
+              <select class="filter-select">
+                <option>全部来源</option><option>微信</option><option>电话</option>
+                <option>到访</option><option>转介绍</option><option>导入</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <span class="filter-label">所属部门</span>
+              <select class="filter-select">
+                <option>全部部门</option><option>销售一部</option><option>销售二部</option>
+              </select>
+            </div>
+            <div style="display:flex;gap:7px;align-items:flex-end">
+              <button class="btn btn-primary">🔍 查询</button>
+              <button class="btn btn-ghost">重置</button>
+            </div>
+          </div>
+        </div>
+        <div class="table-card">
+          <div class="table-header">
+            <span class="table-title">客户列表</span>
+            <span class="table-count">共 1,284 条</span>
+            <div class="table-actions">
+              <button class="btn btn-ghost btn-sm">↓ 导出</button>
+              <button class="btn btn-primary btn-sm">+ 新增客户</button>
+            </div>
+          </div>
+          <table>
+            <thead>
+              <tr><th>客户姓名</th><th>手机号</th><th>客户状态</th><th>意向等级</th><th>热度分</th><th>来源</th><th>所属顾问</th><th>下次跟进</th><th>操作</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="cell-primary">张晓美</span></td>
+                <td><span class="cell-mono">186-1234-0001</span></td>
+                <td><span class="badge badge-info">跟进中</span></td>
+                <td><span class="badge badge-gold">高意向</span></td>
+                <td><div class="heat-bar"><div class="heat-dots"><div class="heat-dot fill"></div><div class="heat-dot fill"></div><div class="heat-dot fill"></div><div class="heat-dot fill"></div><div class="heat-dot empty"></div></div><span style="font-size:11px;color:var(--text-400)">82</span></div></td>
+                <td>微信</td><td>李明</td>
+                <td style="color:var(--danger);font-weight:500;font-size:12px">明天</td>
+                <td><div class="row-actions"><button class="btn btn-ghost btn-sm" onclick="openModal('customer')">详情</button><button class="btn btn-ghost btn-sm">跟进</button></div></td>
+              </tr>
+              <tr>
+                <td><span class="cell-primary">王建国</span></td>
+                <td><span class="cell-mono">139-9876-0023</span></td>
+                <td><span class="badge badge-warning">已到访</span></td>
+                <td><span class="badge badge-info">中意向</span></td>
+                <td><div class="heat-bar"><div class="heat-dots"><div class="heat-dot fill"></div><div class="heat-dot fill"></div><div class="heat-dot fill"></div><div class="heat-dot empty"></div><div class="heat-dot empty"></div></div><span style="font-size:11px;color:var(--text-400)">65</span></div></td>
+                <td>到访</td><td>陈静</td>
+                <td style="font-size:12px;color:var(--text-500)">04-26</td>
+                <td><div class="row-actions"><button class="btn btn-ghost btn-sm" onclick="openModal('customer')">详情</button><button class="btn btn-ghost btn-sm">跟进</button></div></td>
+              </tr>
+              <tr>
+                <td><span class="cell-primary">刘洋</span></td>
+                <td><span class="cell-mono">158-7654-3210</span></td>
+                <td><span class="badge badge-success">已成交</span></td>
+                <td><span class="badge badge-gold">高意向</span></td>
+                <td><div class="heat-bar"><div class="heat-dots"><div class="heat-dot fill"></div><div class="heat-dot fill"></div><div class="heat-dot fill"></div><div class="heat-dot fill"></div><div class="heat-dot fill"></div></div><span style="font-size:11px;color:var(--text-400)">95</span></div></td>
+                <td>转介绍</td><td>王芳</td>
+                <td style="font-size:12px;color:var(--text-400)">已成交</td>
+                <td><div class="row-actions"><button class="btn btn-ghost btn-sm" onclick="openModal('customer')">详情</button></div></td>
+              </tr>
+              <tr>
+                <td><span class="cell-primary">陈思远</span></td>
+                <td><span class="cell-mono">177-6543-2100</span></td>
+                <td><span class="badge badge-gray">新客户</span></td>
+                <td><span class="badge badge-gray">低意向</span></td>
+                <td><div class="heat-bar"><div class="heat-dots"><div class="heat-dot fill"></div><div class="heat-dot empty"></div><div class="heat-dot empty"></div><div class="heat-dot empty"></div><div class="heat-dot empty"></div></div><span style="font-size:11px;color:var(--text-400)">22</span></div></td>
+                <td>电话</td><td>张磊</td>
+                <td style="font-size:12px;color:var(--text-500)">05-01</td>
+                <td><div class="row-actions"><button class="btn btn-ghost btn-sm" onclick="openModal('customer')">详情</button><button class="btn btn-ghost btn-sm">跟进</button></div></td>
+              </tr>
+              <tr>
+                <td><span class="cell-primary">赵丽华</span></td>
+                <td><span class="cell-mono">138-1234-5678</span></td>
+                <td><span class="badge badge-info">跟进中</span></td>
+                <td><span class="badge badge-warning">中意向</span></td>
+                <td><div class="heat-bar"><div class="heat-dots"><div class="heat-dot fill"></div><div class="heat-dot fill"></div><div class="heat-dot fill"></div><div class="heat-dot empty"></div><div class="heat-dot empty"></div></div><span style="font-size:11px;color:var(--text-400)">58</span></div></td>
+                <td>广告</td><td>刘伟</td>
+                <td style="font-size:12px;color:var(--warning);font-weight:500">今天</td>
+                <td><div class="row-actions"><button class="btn btn-ghost btn-sm" onclick="openModal('customer')">详情</button><button class="btn btn-ghost btn-sm">跟进</button></div></td>
+              </tr>
+              <tr>
+                <td><span class="cell-primary">孙海涛</span></td>
+                <td><span class="cell-mono">152-3456-7890</span></td>
+                <td><span class="badge badge-danger">已流失</span></td>
+                <td><span class="badge badge-gray">低意向</span></td>
+                <td><div class="heat-bar"><div class="heat-dots"><div class="heat-dot fill"></div><div class="heat-dot fill"></div><div class="heat-dot empty"></div><div class="heat-dot empty"></div><div class="heat-dot empty"></div></div><span style="font-size:11px;color:var(--text-400)">30</span></div></td>
+                <td>微信</td><td>李明</td>
+                <td style="font-size:12px;color:var(--text-400)">—</td>
+                <td><div class="row-actions"><button class="btn btn-ghost btn-sm" onclick="openModal('customer')">详情</button></div></td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="pagination">
+            <span>共 1,284 条，每页 20 条</span>
+            <div class="pagination-pages">
+              <button class="page-btn">‹</button>
+              <button class="page-btn active">1</button>
+              <button class="page-btn">2</button>
+              <button class="page-btn">3</button>
+              <button class="page-btn">…</button>
+              <button class="page-btn">65</button>
+              <button class="page-btn">›</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── HIGH INTENT ── -->
+      <div id="view-high-intent" class="view">
+        <div class="page-title">高意向客户</div>
+        <div class="page-desc">热度分 ≥ 70 或意向等级为「高」的客户，共 186 位</div>
+        <div class="table-card">
+          <div class="table-header">
+            <span class="table-title">高意向客户</span>
+            <span class="table-count">186 条</span>
+            <div class="table-actions">
+              <button class="btn btn-primary btn-sm">批量分配</button>
+            </div>
+          </div>
+          <table>
+            <thead><tr><th>客户姓名</th><th>手机号</th><th>热度分</th><th>客户状态</th><th>关注区域</th><th>预算范围</th><th>所属顾问</th><th>下次跟进</th><th>操作</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><span class="cell-primary">张晓美</span></td><td><span class="cell-mono">186-1234-0001</span></td>
+                <td><div class="heat-bar"><div class="heat-dots"><div class="heat-dot fill"></div><div class="heat-dot fill"></div><div class="heat-dot fill"></div><div class="heat-dot fill"></div><div class="heat-dot empty"></div></div><span style="font-size:11px;color:var(--text-400)">82</span></div></td>
+                <td><span class="badge badge-info">跟进中</span></td><td>朝阳区</td>
+                <td style="font-size:12px">200–350万</td><td>李明</td>
+                <td style="color:var(--danger);font-size:12px;font-weight:500">明天</td>
+                <td><div class="row-actions"><button class="btn btn-ghost btn-sm">详情</button><button class="btn btn-primary btn-sm">分配</button></div></td>
+              </tr>
+              <tr>
+                <td><span class="cell-primary">钱志远</span></td><td><span class="cell-mono">136-0000-1234</span></td>
+                <td><div class="heat-bar"><div class="heat-dots"><div class="heat-dot fill"></div><div class="heat-dot fill"></div><div class="heat-dot fill"></div><div class="heat-dot fill"></div><div class="heat-dot fill"></div></div><span style="font-size:11px;color:var(--text-400)">91</span></div></td>
+                <td><span class="badge badge-warning">已到访</span></td><td>海淀区</td>
+                <td style="font-size:12px">400–600万</td><td>王芳</td>
+                <td style="color:var(--warning);font-size:12px;font-weight:500">今天</td>
+                <td><div class="row-actions"><button class="btn btn-ghost btn-sm">详情</button><button class="btn btn-primary btn-sm">分配</button></div></td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="pagination"><span>共 186 条</span><div class="pagination-pages"><button class="page-btn">‹</button><button class="page-btn active">1</button><button class="page-btn">2</button><button class="page-btn">›</button></div></div>
+        </div>
+      </div>
+
+      <!-- ── TASK LIST ── -->
+      <div id="view-task-list" class="view">
+        <div class="page-title">任务列表</div>
+        <div class="page-desc">查看全团队跟进任务执行情况</div>
+        <div class="filter-card">
+          <div class="filter-row">
+            <div class="filter-group">
+              <span class="filter-label">任务状态</span>
+              <select class="filter-select">
+                <option>全部状态</option><option>待处理</option><option>已完成</option>
+                <option>已逾期</option><option>已延期</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <span class="filter-label">任务类型</span>
+              <select class="filter-select">
+                <option>全部类型</option><option>跟进</option><option>到访</option>
+                <option>电话</option><option>系统任务</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <span class="filter-label">优先级</span>
+              <select class="filter-select">
+                <option>全部优先级</option><option>紧急</option><option>高</option><option>中</option><option>低</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <span class="filter-label">负责人</span>
+              <select class="filter-select">
+                <option>全部负责人</option><option>李明</option><option>陈静</option><option>王芳</option>
+              </select>
+            </div>
+            <div style="display:flex;gap:7px;align-items:flex-end">
+              <button class="btn btn-primary">🔍 查询</button>
+              <button class="btn btn-ghost">重置</button>
+            </div>
+          </div>
+        </div>
+        <div class="table-card">
+          <div class="table-header">
+            <span class="table-title">任务列表</span>
+            <span class="table-count">共 247 条</span>
+          </div>
+          <table>
+            <thead><tr><th>任务标题</th><th>类型</th><th>关联客户</th><th>负责人</th><th>任务日期</th><th>优先级</th><th>任务状态</th><th>延期次数</th><th>操作</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><span class="cell-primary">电话跟进 — 报价确认</span></td>
+                <td><span class="badge badge-info">电话</span></td><td>张晓美</td><td>李明</td>
+                <td style="font-size:12px;color:var(--danger);font-weight:500">04-24 10:00</td>
+                <td><span class="badge badge-danger">紧急</span></td>
+                <td><span class="badge badge-warning">待处理</span></td>
+                <td style="text-align:center">0</td>
+                <td><div class="row-actions"><button class="btn btn-ghost btn-sm">详情</button><button class="btn btn-primary btn-sm">完成</button></div></td>
+              </tr>
+              <tr>
+                <td><span class="cell-primary">带看安排 — 样板间</span></td>
+                <td><span class="badge badge-purple">到访</span></td><td>王建国</td><td>陈静</td>
+                <td style="font-size:12px">04-24 14:30</td>
+                <td><span class="badge badge-warning">高</span></td>
+                <td><span class="badge badge-warning">待处理</span></td>
+                <td style="text-align:center">1</td>
+                <td><div class="row-actions"><button class="btn btn-ghost btn-sm">详情</button><button class="btn btn-primary btn-sm">完成</button></div></td>
+              </tr>
+              <tr>
+                <td><span class="cell-primary">合同签署跟进</span></td>
+                <td><span class="badge badge-success">跟进</span></td><td>刘洋</td><td>王芳</td>
+                <td style="font-size:12px;color:var(--text-400)">04-23 16:00</td>
+                <td><span class="badge badge-info">中</span></td>
+                <td><span class="badge badge-success">已完成</span></td>
+                <td style="text-align:center">0</td>
+                <td><div class="row-actions"><button class="btn btn-ghost btn-sm">详情</button></div></td>
+              </tr>
+              <tr>
+                <td><span class="cell-primary">客户需求确认</span></td>
+                <td><span class="badge badge-info">电话</span></td><td>赵丽华</td><td>刘伟</td>
+                <td style="font-size:12px;color:var(--danger);font-weight:500">04-22 09:00</td>
+                <td><span class="badge badge-gray">低</span></td>
+                <td><span class="badge badge-danger">已逾期</span></td>
+                <td style="text-align:center;color:var(--danger)">2</td>
+                <td><div class="row-actions"><button class="btn btn-ghost btn-sm">详情</button><button class="btn btn-ghost btn-sm">转派</button></div></td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="pagination">
+            <span>共 247 条，每页 20 条</span>
+            <div class="pagination-pages"><button class="page-btn">‹</button><button class="page-btn active">1</button><button class="page-btn">2</button><button class="page-btn">3</button><button class="page-btn">›</button></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── TODAY TASKS ── -->
+      <div id="view-task-today" class="view">
+        <div class="page-title">今日任务</div>
+        <div class="page-desc">2026年4月24日 · 共 47 个，已完成 23 个</div>
+        <div class="table-card">
+          <div class="table-header">
+            <span class="table-title">今日任务</span><span class="table-count">47 条</span>
+          </div>
+          <table>
+            <thead><tr><th>任务标题</th><th>关联客户</th><th>负责人</th><th>计划时间</th><th>优先级</th><th>状态</th><th>操作</th></tr></thead>
+            <tbody>
+              <tr><td><span class="cell-primary">电话跟进 — 报价确认</span></td><td>张晓美</td><td>李明</td><td style="font-size:12px;color:var(--danger);font-weight:500">10:00</td><td><span class="badge badge-danger">紧急</span></td><td><span class="badge badge-warning">待处理</span></td><td><div class="row-actions"><button class="btn btn-primary btn-sm">标记完成</button></div></td></tr>
+              <tr><td><span class="cell-primary">带看安排 — 样板间</span></td><td>王建国</td><td>陈静</td><td style="font-size:12px">14:30</td><td><span class="badge badge-warning">高</span></td><td><span class="badge badge-warning">待处理</span></td><td><div class="row-actions"><button class="btn btn-primary btn-sm">标记完成</button></div></td></tr>
+              <tr><td><span class="cell-primary">微信跟进问候</span></td><td>赵丽华</td><td>刘伟</td><td style="font-size:12px">16:00</td><td><span class="badge badge-gray">低</span></td><td><span class="badge badge-success">已完成</span></td><td><div class="row-actions"><button class="btn btn-ghost btn-sm">详情</button></div></td></tr>
+            </tbody>
+          </table>
+          <div class="pagination"><span>共 47 条</span><div class="pagination-pages"><button class="page-btn active">1</button><button class="page-btn">2</button><button class="page-btn">3</button></div></div>
+        </div>
+      </div>
+
+      <!-- ── OVERDUE TASKS ── -->
+      <div id="view-task-overdue" class="view">
+        <div class="page-title">逾期任务</div>
+        <div class="page-desc" style="color:var(--danger)">⚠ 共 13 个逾期任务，请及时处理或转派</div>
+        <div class="table-card">
+          <div class="table-header">
+            <span class="table-title" style="color:var(--danger)">逾期任务</span><span class="table-count">13 条</span>
+          </div>
+          <table>
+            <thead><tr><th>任务标题</th><th>关联客户</th><th>负责人</th><th>应完成时间</th><th>逾期天数</th><th>延期次数</th><th>操作</th></tr></thead>
+            <tbody>
+              <tr><td><span class="cell-primary">客户需求确认</span></td><td>赵丽华</td><td>刘伟</td><td style="font-size:12px;color:var(--danger)">04-22 09:00</td><td style="color:var(--danger);font-weight:600">2天</td><td style="color:var(--danger)">2</td><td><div class="row-actions"><button class="btn btn-ghost btn-sm">详情</button><button class="btn btn-danger btn-sm">转派</button></div></td></tr>
+              <tr><td><span class="cell-primary">资料补充跟进</span></td><td>孙海涛</td><td>李明</td><td style="font-size:12px;color:var(--danger)">04-21 15:00</td><td style="color:var(--danger);font-weight:600">3天</td><td style="color:var(--danger)">1</td><td><div class="row-actions"><button class="btn btn-ghost btn-sm">详情</button><button class="btn btn-danger btn-sm">转派</button></div></td></tr>
+            </tbody>
+          </table>
+          <div class="pagination"><span>共 13 条</span></div>
+        </div>
+      </div>
+
+      <!-- ── USER MANAGEMENT ── -->
+      <div id="view-user-list" class="view">
+        <div class="page-title">用户管理</div>
+        <div class="page-desc">管理系统用户账号、角色权限和部门归属</div>
+        <div class="filter-card">
+          <div class="filter-row">
+            <div class="filter-group">
+              <span class="filter-label">关键词</span>
+              <input class="filter-input" placeholder="用户名、昵称或手机号" type="text">
+            </div>
+            <div class="filter-group">
+              <span class="filter-label">角色</span>
+              <select class="filter-select">
+                <option>全部角色</option><option>管理员</option><option>销售经理</option><option>销售顾问</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <span class="filter-label">部门</span>
+              <select class="filter-select">
+                <option>全部部门</option><option>销售一部</option><option>销售二部</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <span class="filter-label">状态</span>
+              <select class="filter-select" style="min-width:90px">
+                <option>全部</option><option>启用</option><option>禁用</option>
+              </select>
+            </div>
+            <div style="display:flex;gap:7px;align-items:flex-end">
+              <button class="btn btn-primary">🔍 查询</button>
+              <button class="btn btn-ghost">重置</button>
+            </div>
+          </div>
+        </div>
+        <div class="table-card">
+          <div class="table-header">
+            <span class="table-title">用户列表</span><span class="table-count">共 24 条</span>
+            <div class="table-actions">
+              <button class="btn btn-primary btn-sm" onclick="openModal('user')">+ 新增用户</button>
+            </div>
+          </div>
+          <table>
+            <thead><tr><th>用户名</th><th>昵称</th><th>手机号</th><th>角色</th><th>部门</th><th>上级经理</th><th>状态</th><th>创建时间</th><th>操作</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><span class="cell-primary">admin</span></td><td>系统管理员</td>
+                <td><span class="cell-mono">136-0000-0000</span></td>
+                <td><span class="badge badge-purple">管理员</span></td><td>—</td><td>—</td>
+                <td><span class="badge badge-success">启用</span></td>
+                <td style="font-size:12px;color:var(--text-400)">2024-01-01</td>
+                <td><div class="row-actions"><button class="btn btn-ghost btn-sm" onclick="openModal('user')">编辑</button></div></td>
+              </tr>
+              <tr>
+                <td><span class="cell-primary">liming</span></td><td>李明</td>
+                <td><span class="cell-mono">138-0000-0001</span></td>
+                <td><span class="badge badge-info">销售顾问</span></td><td>销售一部</td><td>张经理</td>
+                <td><span class="badge badge-success">启用</span></td>
+                <td style="font-size:12px;color:var(--text-400)">2024-02-15</td>
+                <td><div class="row-actions"><button class="btn btn-ghost btn-sm" onclick="openModal('user')">编辑</button><button class="btn btn-danger btn-sm">禁用</button></div></td>
+              </tr>
+              <tr>
+                <td><span class="cell-primary">chenjing</span></td><td>陈静</td>
+                <td><span class="cell-mono">139-0000-0002</span></td>
+                <td><span class="badge badge-info">销售顾问</span></td><td>销售一部</td><td>张经理</td>
+                <td><span class="badge badge-success">启用</span></td>
+                <td style="font-size:12px;color:var(--text-400)">2024-02-20</td>
+                <td><div class="row-actions"><button class="btn btn-ghost btn-sm" onclick="openModal('user')">编辑</button><button class="btn btn-danger btn-sm">禁用</button></div></td>
+              </tr>
+              <tr>
+                <td><span class="cell-primary">zhangmgr</span></td><td>张经理</td>
+                <td><span class="cell-mono">136-0000-0010</span></td>
+                <td><span class="badge badge-gold">销售经理</span></td><td>销售一部</td><td>—</td>
+                <td><span class="badge badge-success">启用</span></td>
+                <td style="font-size:12px;color:var(--text-400)">2024-01-10</td>
+                <td><div class="row-actions"><button class="btn btn-ghost btn-sm" onclick="openModal('user')">编辑</button></div></td>
+              </tr>
+              <tr>
+                <td><span class="cell-primary">wangfang</span></td><td>王芳</td>
+                <td><span class="cell-mono">137-0000-0003</span></td>
+                <td><span class="badge badge-info">销售顾问</span></td><td>销售二部</td><td>陈经理</td>
+                <td><span class="badge badge-danger">禁用</span></td>
+                <td style="font-size:12px;color:var(--text-400)">2024-03-05</td>
+                <td><div class="row-actions"><button class="btn btn-ghost btn-sm" onclick="openModal('user')">编辑</button><button class="btn btn-primary btn-sm">启用</button></div></td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="pagination">
+            <span>共 24 条，每页 20 条</span>
+            <div class="pagination-pages"><button class="page-btn">‹</button><button class="page-btn active">1</button><button class="page-btn">2</button><button class="page-btn">›</button></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── ROLE LIST ── -->
+      <div id="view-role-list" class="view">
+        <div class="page-title">角色管理</div>
+        <div class="page-desc">系统内置角色列表（当前为只读模式，MVP 阶段暂不支持编辑）</div>
+        <div class="table-card">
+          <div class="table-header"><span class="table-title">角色列表</span><span class="table-count">3 条</span></div>
+          <table>
+            <thead><tr><th>角色编码</th><th>角色名称</th><th>说明</th><th>状态</th></tr></thead>
+            <tbody>
+              <tr><td><span class="cell-mono">ADMIN</span></td><td><span class="cell-primary">管理员</span></td><td style="color:var(--text-500);font-size:12px">拥有全部后台管理权限</td><td><span class="badge badge-success">启用</span></td></tr>
+              <tr><td><span class="cell-mono">MANAGER</span></td><td><span class="cell-primary">销售经理</span></td><td style="color:var(--text-500);font-size:12px">可查看团队数据，管理客户和任务分配</td><td><span class="badge badge-success">启用</span></td></tr>
+              <tr><td><span class="cell-mono">ADVISOR</span></td><td><span class="cell-primary">销售顾问</span></td><td style="color:var(--text-500);font-size:12px">负责日常客户跟进和任务执行</td><td><span class="badge badge-success">启用</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── DEPT TREE ── -->
+      <div id="view-dept-tree" class="view">
+        <div class="page-title">部门管理</div>
+        <div class="page-desc">组织架构树形展示（当前为只读模式，MVP 阶段暂不支持新增/编辑）</div>
+        <div class="dept-layout">
+          <div class="card">
+            <div class="card-header"><span class="card-title">组织架构</span></div>
+            <div class="card-body">
+              <div>
+                <div class="tree-node-row active" onclick="selectDept(this,'购房CRM科技有限公司','—','—','18','启用')">
+                  <span style="color:var(--text-400);font-size:10px">▼</span> 🏢 购房CRM科技有限公司
+                </div>
+                <div class="tree-children">
+                  <div>
+                    <div class="tree-node-row" onclick="selectDept(this,'销售中心','购房CRM科技有限公司','张总','10','启用')">
+                      <span style="color:var(--text-400);font-size:10px">▼</span> 📁 销售中心
+                    </div>
+                    <div class="tree-children">
+                      <div class="tree-node-row" onclick="selectDept(this,'销售一部','销售中心','张经理','5','启用')">
+                        <span style="visibility:hidden;font-size:10px">▼</span> 📄 销售一部
+                      </div>
+                      <div class="tree-node-row" onclick="selectDept(this,'销售二部','销售中心','陈经理','5','启用')">
+                        <span style="visibility:hidden;font-size:10px">▼</span> 📄 销售二部
+                      </div>
+                    </div>
+                  </div>
+                  <div class="tree-node-row" onclick="selectDept(this,'运营中心','购房CRM科技有限公司','王总监','3','启用')">
+                    <span style="visibility:hidden;font-size:10px">▼</span> 📁 运营中心
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">部门详情</span></div>
+            <div class="card-body">
+              <table style="width:auto">
+                <tr><td style="padding:10px 20px 10px 0;color:var(--text-400);font-size:12px;border:none;white-space:nowrap">部门名称</td><td style="padding:10px 0;border:none;font-weight:500" id="dd-name">购房CRM科技有限公司</td></tr>
+                <tr><td style="padding:10px 20px 10px 0;color:var(--text-400);font-size:12px;border:none">上级部门</td><td style="padding:10px 0;border:none" id="dd-parent">—</td></tr>
+                <tr><td style="padding:10px 20px 10px 0;color:var(--text-400);font-size:12px;border:none">负责人</td><td style="padding:10px 0;border:none" id="dd-head">—</td></tr>
+                <tr><td style="padding:10px 20px 10px 0;color:var(--text-400);font-size:12px;border:none">人员数量</td><td style="padding:10px 0;border:none" id="dd-count">18 人</td></tr>
+                <tr><td style="padding:10px 20px 10px 0;color:var(--text-400);font-size:12px;border:none">状态</td><td style="padding:10px 0;border:none"><span class="badge badge-success" id="dd-status">启用</span></td></tr>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── PROFILE ── -->
+      <div id="view-profile" class="view">
+        <div class="page-title">个人信息</div>
+        <div class="page-desc">查看和修改个人账户信息</div>
+        <div style="max-width:500px">
+          <div class="card">
+            <div class="card-header"><span class="card-title">基本信息</span></div>
+            <div class="card-body">
+              <div style="display:flex;align-items:center;gap:18px;margin-bottom:22px;padding-bottom:18px;border-bottom:1px solid var(--border-light)">
+                <div style="width:66px;height:66px;border-radius:50%;background:linear-gradient(135deg,var(--gold-500),var(--navy-700));display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;color:#fff;flex-shrink:0">管</div>
+                <div>
+                  <div style="font-size:17px;font-weight:600;color:var(--text-900)">系统管理员</div>
+                  <div style="font-size:12px;color:var(--text-400);margin-top:2px">ADMIN · 系统内置账号</div>
+                  <div style="margin-top:7px"><span class="badge badge-purple">管理员</span></div>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-field">
+                  <label class="form-label">用户名</label>
+                  <input type="text" value="admin" readonly style="background:var(--surface-50)">
+                </div>
+                <div class="form-field">
+                  <label class="form-label">昵称</label>
+                  <input type="text" value="系统管理员">
+                </div>
+              </div>
+              <div class="form-field">
+                <label class="form-label">手机号</label>
+                <input type="text" value="136-0000-0000">
+              </div>
+              <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:4px">
+                <button class="btn btn-ghost">取消</button>
+                <button class="btn btn-primary">保存修改</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </main>
+</div><!-- /page-main -->
+
+<!-- ═══ MODAL ═══ -->
+<div class="modal-overlay" id="modal" onclick="closeModal(event)">
+  <div class="modal" id="modal-inner">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-title">新增用户</span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body">
+      <!-- filled by JS -->
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">取消</button>
+      <button class="btn btn-primary" id="modal-confirm">确认</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const MODAL_TEMPLATES = {
+    user: {
+      title: '新增用户',
+      confirm: '确认新增',
+      html: `
+        <div class="form-row">
+          <div class="form-field"><label class="form-label">用户名</label><input type="text" placeholder="请输入用户名"></div>
+          <div class="form-field"><label class="form-label">密码</label><input type="password" placeholder="请输入初始密码"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-field"><label class="form-label">昵称</label><input type="text" placeholder="展示名称"></div>
+          <div class="form-field"><label class="form-label">手机号</label><input type="text" placeholder="1XX-XXXX-XXXX"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-field"><label class="form-label">角色</label><select><option>请选择角色</option><option>管理员</option><option>销售经理</option><option>销售顾问</option></select></div>
+          <div class="form-field"><label class="form-label">部门</label><select><option>请选择部门</option><option>销售一部</option><option>销售二部</option></select></div>
+        </div>
+        <div class="form-row">
+          <div class="form-field"><label class="form-label">上级经理</label><select><option>请选择经理</option><option>张经理</option><option>陈经理</option></select></div>
+          <div class="form-field"><label class="form-label">状态</label><select><option>启用</option><option>禁用</option></select></div>
+        </div>`
+    },
+    customer: {
+      title: '客户详情 — 张晓美',
+      confirm: '关闭',
+      html: `
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border-light)">
+          <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--navy-700),var(--navy-600));display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:600;color:var(--gold-400);flex-shrink:0">张</div>
+          <div>
+            <div style="font-size:16px;font-weight:600;color:var(--text-900)">张晓美</div>
+            <div style="font-size:12px;color:var(--text-400);margin-top:2px">186-1234-0001 · 微信来源</div>
+          </div>
+          <div style="margin-left:auto;display:flex;gap:6px"><span class="badge badge-gold">高意向</span><span class="badge badge-info">跟进中</span></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13px">
+          <div style="display:flex;flex-direction:column;gap:2px"><span style="color:var(--text-400);font-size:11px;text-transform:uppercase;letter-spacing:.7px">关注区域</span><span>朝阳区</span></div>
+          <div style="display:flex;flex-direction:column;gap:2px"><span style="color:var(--text-400);font-size:11px;text-transform:uppercase;letter-spacing:.7px">预算范围</span><span>200–350万</span></div>
+          <div style="display:flex;flex-direction:column;gap:2px"><span style="color:var(--text-400);font-size:11px;text-transform:uppercase;letter-spacing:.7px">户型需求</span><span>三居室</span></div>
+          <div style="display:flex;flex-direction:column;gap:2px"><span style="color:var(--text-400);font-size:11px;text-transform:uppercase;letter-spacing:.7px">购房目的</span><span>自住</span></div>
+          <div style="display:flex;flex-direction:column;gap:2px"><span style="color:var(--text-400);font-size:11px;text-transform:uppercase;letter-spacing:.7px">热度分</span><span style="color:var(--gold-500);font-weight:600">82 分</span></div>
+          <div style="display:flex;flex-direction:column;gap:2px"><span style="color:var(--text-400);font-size:11px;text-transform:uppercase;letter-spacing:.7px">所属顾问</span><span>李明</span></div>
+          <div style="display:flex;flex-direction:column;gap:2px"><span style="color:var(--text-400);font-size:11px;text-transform:uppercase;letter-spacing:.7px">最近跟进</span><span>10分钟前</span></div>
+          <div style="display:flex;flex-direction:column;gap:2px"><span style="color:var(--text-400);font-size:11px;text-transform:uppercase;letter-spacing:.7px">下次跟进</span><span style="color:var(--danger);font-weight:500">明天</span></div>
+        </div>`
+    }
+  };
+
+  function goToMain() {
+    document.getElementById('page-login').classList.remove('active');
+    document.getElementById('page-main').classList.add('active');
+  }
+  function goToLogin() {
+    document.getElementById('page-main').classList.remove('active');
+    document.getElementById('page-login').classList.add('active');
+  }
+  function switchView(el, viewId, parent, current) {
+    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+    el.classList.add('active');
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById('view-' + viewId).classList.add('active');
+    document.getElementById('bc-parent').textContent = parent;
+    document.getElementById('bc-current').textContent = current;
+  }
+  function switchViewById(viewId, parent, current) {
+    const el = document.querySelector('[data-view="' + viewId + '"]');
+    if (el) switchView(el, viewId, parent, current);
+  }
+  function openModal(type) {
+    const t = MODAL_TEMPLATES[type] || MODAL_TEMPLATES.user;
+    document.getElementById('modal-title').textContent = t.title;
+    document.getElementById('modal-body').innerHTML = t.html;
+    document.getElementById('modal-confirm').textContent = t.confirm;
+    document.getElementById('modal').classList.add('open');
+  }
+  function closeModal(e) {
+    if (!e || e.target === document.getElementById('modal')) {
+      document.getElementById('modal').classList.remove('open');
+    }
+  }
+  function selectDept(el, name, parent, head, count, status) {
+    document.querySelectorAll('.tree-node-row').forEach(n => n.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('dd-name').textContent = name;
+    document.getElementById('dd-parent').textContent = parent;
+    document.getElementById('dd-head').textContent = head;
+    document.getElementById('dd-count').textContent = count + ' 人';
+    document.getElementById('dd-status').textContent = status;
+  }
+</script>
+</body>
+</html>

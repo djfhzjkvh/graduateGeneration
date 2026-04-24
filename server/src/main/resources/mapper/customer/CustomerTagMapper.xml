@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.graduation.crm.modules.customer.mapper.CustomerTagMapper">
+
+    <select id="selectEnabledTags" resultType="com.graduation.crm.modules.customer.vo.CustomerTagVO">
+        SELECT
+            id,
+            tag_name,
+            tag_type,
+            color,
+            status
+        FROM crm_customer_tag
+        WHERE status = 1
+        ORDER BY id ASC
+    </select>
+
+    <select id="selectTagNamesByCustomerId" resultType="java.lang.String">
+        SELECT t.tag_name
+        FROM crm_customer_tag_rel r
+        INNER JOIN crm_customer_tag t ON r.tag_id = t.id
+        WHERE r.customer_id = #{customerId}
+          AND t.status = 1
+        ORDER BY t.id ASC
+    </select>
+</mapper>
+

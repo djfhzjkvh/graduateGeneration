@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.graduation.crm.modules.message.mapper.MessageMapper">
+
+    <select id="selectMessagePage" resultType="com.graduation.crm.modules.message.vo.MessageVO">
+        SELECT
+            id,
+            user_id,
+            msg_type,
+            title,
+            content,
+            biz_type,
+            biz_id,
+            read_status,
+            created_at
+        FROM sys_message
+        WHERE 1 = 1
+        <if test="query.userId != null">
+            AND user_id = #{query.userId}
+        </if>
+        <if test="query.readStatus != null">
+            AND read_status = #{query.readStatus}
+        </if>
+        ORDER BY read_status ASC, created_at DESC
+    </select>
+</mapper>
+

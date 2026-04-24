@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.graduation.crm.modules.project.mapper.CompetitorProjectMapper">
+
+    <select id="selectCompetitorPage" resultType="com.graduation.crm.modules.project.vo.CompetitorProjectVO">
+        SELECT
+            id,
+            project_name,
+            region,
+            avg_price,
+            discount_info,
+            house_types,
+            handover_date,
+            highlights,
+            weakness,
+            status
+        FROM crm_competitor_project
+        WHERE 1 = 1
+        <if test="query.keyword != null and query.keyword != ''">
+            AND project_name LIKE CONCAT('%', #{query.keyword}, '%')
+        </if>
+        <if test="query.region != null and query.region != ''">
+            AND region = #{query.region}
+        </if>
+        <if test="query.status != null">
+            AND status = #{query.status}
+        </if>
+        ORDER BY updated_at DESC, id DESC
+    </select>
+</mapper>
+

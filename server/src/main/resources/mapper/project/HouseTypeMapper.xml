@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.graduation.crm.modules.project.mapper.HouseTypeMapper">
+
+    <select id="selectByProjectId" resultType="com.graduation.crm.modules.project.vo.HouseTypeVO">
+        SELECT
+            h.id,
+            h.project_id,
+            p.project_name,
+            h.type_name,
+            h.area,
+            h.rooms,
+            h.total_price_min,
+            h.total_price_max,
+            h.selling_points,
+            h.status
+        FROM crm_house_type h
+        LEFT JOIN crm_project p ON h.project_id = p.id
+        WHERE h.project_id = #{projectId}
+        ORDER BY h.status DESC, h.id ASC
+    </select>
+</mapper>
+

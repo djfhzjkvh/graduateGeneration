@@ -13,10 +13,9 @@ public interface CustomerService {
 
     CustomerDetailVO detail(Long id);
 
-    void create(CustomerCreateDTO dto);
+    Long create(CustomerCreateDTO dto);
 
     void update(Long id, CustomerUpdateDTO dto);
 
     void delete(Long id);
 }
-
