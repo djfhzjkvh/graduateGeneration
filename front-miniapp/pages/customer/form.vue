@@ -24,7 +24,7 @@
         <text class="form-value">{{ CUSTOMER_SOURCE[form.source] || '请选择' }}</text>
         <text class="form-arrow">›</text>
       </view>
-      <view class="form-item" @tap="showPicker('status')">
+      <view class="form-item" @tap="showPicker('status')" v-if="isEdit">
         <text class="form-label">客户状态</text>
         <text class="form-value">{{ CUSTOMER_STATUS[form.status] ? CUSTOMER_STATUS[form.status].label : '请选择' }}</text>
         <text class="form-arrow">›</text>
@@ -63,7 +63,7 @@
 
     <view class="form-group">
       <text class="form-group-title">跟进备注</text>
-      <view class="form-item" style="align-items: flex-start; padding-top: 24rpx;">
+      <view class="form-item textarea-item">
         <textarea
           class="form-textarea"
           v-model="form.remark"
@@ -77,7 +77,6 @@
 
     <view style="height: 32rpx;" />
 
-    <!-- 底部操作 -->
     <view class="bottom-bar">
       <button v-if="isEdit" class="btn btn-danger" style="flex:1" @tap="deleteCustomer">删除</button>
       <button class="btn btn-primary" style="flex:2" :disabled="saving" @tap="save">
@@ -91,6 +90,9 @@
 import { ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { GENDER, CUSTOMER_SOURCE, CUSTOMER_STATUS, INTENT_LEVEL, PURCHASE_PURPOSE } from '../../constants/dictionary'
+import { customerApi } from '../../api/customer'
+import { useUserStore } from '../../stores/user'
+import { mapCustomer } from '../../utils/adapters'
 
 const form = ref({
   name: '', phone: '', gender: '', age: '', source: '', status: 'NEW',
@@ -99,32 +101,66 @@ const form = ref({
 })
 const saving = ref(false)
 const isEdit = ref(false)
+const customerId = ref(null)
+const { userInfo, loadUser } = useUserStore()
 
-onLoad((options) => {
-  if (options?.id) {
-    isEdit.value = true
-    uni.setNavigationBarTitle({ title: '编辑客户' })
-    // 原型：填充 mock 数据
-    Object.assign(form.value, { name: '张先生', phone: '13812345678', gender: 'MALE', age: 35, source: 'WECHAT', status: 'FOLLOWING', intentLevel: 'HIGH', budgetMin: 150, budgetMax: 200, focusArea: '天府新区', houseType: '三室两厅', purpose: 'SELF_USE', remark: '急需在6月前购房' })
-  }
+onLoad(async (options) => {
+  loadUser()
+  if (!options?.id) return
+  isEdit.value = true
+  customerId.value = options.id
+  uni.setNavigationBarTitle({ title: '编辑客户' })
+  const data = mapCustomer(await customerApi.detail(options.id))
+  Object.assign(form.value, {
+    name: data.name,
+    phone: data.phone,
+    gender: data.gender || '',
+    age: data.age || '',
+    source: data.source || '',
+    status: data.status || 'NEW',
+    intentLevel: data.intentLevel || 'MEDIUM',
+    budgetMin: data.budgetMin || '',
+    budgetMax: data.budgetMax || '',
+    focusArea: data.focusArea || '',
+    houseType: data.houseType || '',
+    purpose: data.purpose || '',
+    remark: data.remark || ''
+  })
 })
 
 const PICKER_OPTIONS = {
-  gender: { label: '性别', keys: Object.keys(GENDER), labels: Object.values(GENDER) },
-  source: { label: '来源', keys: Object.keys(CUSTOMER_SOURCE), labels: Object.values(CUSTOMER_SOURCE) },
-  status: { label: '客户状态', keys: Object.keys(CUSTOMER_STATUS), labels: Object.values(CUSTOMER_STATUS).map(v => v.label) },
-  intentLevel: { label: '意向等级', keys: Object.keys(INTENT_LEVEL), labels: Object.values(INTENT_LEVEL).map(v => v.label) },
-  purpose: { label: '购房目的', keys: Object.keys(PURCHASE_PURPOSE), labels: Object.values(PURCHASE_PURPOSE) }
+  gender: { keys: Object.keys(GENDER), labels: Object.values(GENDER) },
+  source: { keys: Object.keys(CUSTOMER_SOURCE), labels: Object.values(CUSTOMER_SOURCE) },
+  status: { keys: Object.keys(CUSTOMER_STATUS), labels: Object.values(CUSTOMER_STATUS).map(v => v.label) },
+  intentLevel: { keys: Object.keys(INTENT_LEVEL), labels: Object.values(INTENT_LEVEL).map(v => v.label) },
+  purpose: { keys: Object.keys(PURCHASE_PURPOSE), labels: Object.values(PURCHASE_PURPOSE) }
 }
 
 function showPicker(field) {
   const cfg = PICKER_OPTIONS[field]
   uni.showActionSheet({
     itemList: cfg.labels,
-    success(res) {
-      form.value[field] = cfg.keys[res.tapIndex]
-    }
+    success(res) { form.value[field] = cfg.keys[res.tapIndex] }
   })
+}
+
+function payload() {
+  return {
+    customerName: form.value.name,
+    mobile: form.value.phone,
+    gender: form.value.gender,
+    age: form.value.age ? Number(form.value.age) : undefined,
+    source: form.value.source,
+    status: form.value.status,
+    intentLevel: form.value.intentLevel,
+    budgetMin: form.value.budgetMin || undefined,
+    budgetMax: form.value.budgetMax || undefined,
+    region: form.value.focusArea,
+    houseType: form.value.houseType,
+    purpose: form.value.purpose,
+    remark: form.value.remark,
+    advisorId: userInfo.value?.id
+  }
 }
 
 async function save() {
@@ -133,10 +169,17 @@ async function save() {
     return
   }
   saving.value = true
-  await new Promise(r => setTimeout(r, 600))
-  saving.value = false
-  uni.showToast({ title: isEdit.value ? '保存成功' : '添加成功', icon: 'success' })
-  setTimeout(() => uni.navigateBack(), 1200)
+  try {
+    if (isEdit.value) {
+      await customerApi.update(customerId.value, payload())
+    } else {
+      await customerApi.create(payload())
+    }
+    uni.showToast({ title: isEdit.value ? '保存成功' : '添加成功', icon: 'success' })
+    setTimeout(() => uni.navigateBack(), 900)
+  } finally {
+    saving.value = false
+  }
 }
 
 function deleteCustomer() {
@@ -144,11 +187,11 @@ function deleteCustomer() {
     title: '删除客户',
     content: '确认删除该客户？此操作不可恢复。',
     confirmColor: '#c81e1e',
-    success(res) {
-      if (res.confirm) {
-        uni.showToast({ title: '已删除', icon: 'success' })
-        setTimeout(() => uni.navigateBack({ delta: 2 }), 1200)
-      }
+    success: async (res) => {
+      if (!res.confirm) return
+      await customerApi.remove(customerId.value)
+      uni.showToast({ title: '已删除', icon: 'success' })
+      setTimeout(() => uni.navigateBack({ delta: 2 }), 900)
     }
   })
 }
@@ -157,5 +200,10 @@ function deleteCustomer() {
 <style lang="scss" scoped>
 .form-group {
   margin: 24rpx 24rpx 0;
+}
+
+.textarea-item {
+  align-items: flex-start;
+  padding-top: 24rpx;
 }
 </style>

@@ -52,6 +52,47 @@
       }
     },
     {
+      "path": "pages/message/list",
+      "style": {
+        "navigationBarTitleText": "消息通知",
+        "navigationBarBackgroundColor": "#ffffff",
+        "navigationBarTextStyle": "black",
+        "enablePullDownRefresh": true
+      }
+    },
+    {
+      "path": "pages/ai/script",
+      "style": {
+        "navigationBarTitleText": "AI跟进话术",
+        "navigationBarBackgroundColor": "#ffffff",
+        "navigationBarTextStyle": "black"
+      }
+    },
+    {
+      "path": "pages/note/list",
+      "style": {
+        "navigationBarTitleText": "客户云笔记",
+        "navigationBarBackgroundColor": "#ffffff",
+        "navigationBarTextStyle": "black"
+      }
+    },
+    {
+      "path": "pages/note/form",
+      "style": {
+        "navigationBarTitleText": "编辑笔记",
+        "navigationBarBackgroundColor": "#ffffff",
+        "navigationBarTextStyle": "black"
+      }
+    },
+    {
+      "path": "pages/competitor/compare",
+      "style": {
+        "navigationBarTitleText": "竞品对比",
+        "navigationBarBackgroundColor": "#ffffff",
+        "navigationBarTextStyle": "black"
+      }
+    },
+    {
       "path": "pages/task/list",
       "style": {
         "navigationBarTitleText": "任务",

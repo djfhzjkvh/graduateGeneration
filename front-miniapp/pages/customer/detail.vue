@@ -1,7 +1,6 @@
 <template>
   <view class="page-container" style="padding-bottom: 160rpx;">
     <view v-if="customer">
-      <!-- 基础信息卡 -->
       <view class="info-section">
         <view class="customer-head">
           <view class="avatar">
@@ -18,64 +17,29 @@
         </view>
       </view>
 
-      <!-- 详细信息 -->
       <view class="form-group">
         <text class="form-group-title">基础信息</text>
-        <view class="form-item">
-          <text class="form-label">性别</text>
-          <text class="form-value">{{ GENDER[customer.gender] || '--' }}</text>
-        </view>
-        <view class="form-item">
-          <text class="form-label">年龄</text>
-          <text class="form-value">{{ customer.age ? customer.age + '岁' : '--' }}</text>
-        </view>
-        <view class="form-item">
-          <text class="form-label">客户来源</text>
-          <text class="form-value">{{ CUSTOMER_SOURCE[customer.source] || '--' }}</text>
-        </view>
-        <view class="form-item">
-          <text class="form-label">备注</text>
-          <text class="form-value">{{ customer.remark || '--' }}</text>
-        </view>
+        <view class="form-item"><text class="form-label">性别</text><text class="form-value">{{ GENDER[customer.gender] || '--' }}</text></view>
+        <view class="form-item"><text class="form-label">年龄</text><text class="form-value">{{ customer.age ? customer.age + '岁' : '--' }}</text></view>
+        <view class="form-item"><text class="form-label">客户来源</text><text class="form-value">{{ CUSTOMER_SOURCE[customer.source] || '--' }}</text></view>
+        <view class="form-item"><text class="form-label">备注</text><text class="form-value">{{ customer.remark || '--' }}</text></view>
       </view>
 
       <view class="form-group">
         <text class="form-group-title">购房意向</text>
-        <view class="form-item">
-          <text class="form-label">预算范围</text>
-          <text class="form-value">{{ formatBudget(customer.budgetMin, customer.budgetMax) }}</text>
-        </view>
-        <view class="form-item">
-          <text class="form-label">关注区域</text>
-          <text class="form-value">{{ customer.focusArea || '--' }}</text>
-        </view>
-        <view class="form-item">
-          <text class="form-label">户型需求</text>
-          <text class="form-value">{{ customer.houseType || '--' }}</text>
-        </view>
-        <view class="form-item">
-          <text class="form-label">购房目的</text>
-          <text class="form-value">{{ PURCHASE_PURPOSE[customer.purpose] || '--' }}</text>
-        </view>
-        <view class="form-item">
-          <text class="form-label">热度分</text>
-          <text class="form-value heat">{{ customer.heatScore !== null && customer.heatScore !== undefined ? customer.heatScore : '--' }}</text>
-        </view>
+        <view class="form-item"><text class="form-label">预算范围</text><text class="form-value">{{ formatBudget(customer.budgetMin, customer.budgetMax) }}</text></view>
+        <view class="form-item"><text class="form-label">关注区域</text><text class="form-value">{{ customer.focusArea || '--' }}</text></view>
+        <view class="form-item"><text class="form-label">户型需求</text><text class="form-value">{{ customer.houseType || '--' }}</text></view>
+        <view class="form-item"><text class="form-label">购房目的</text><text class="form-value">{{ PURCHASE_PURPOSE[customer.purpose] || '--' }}</text></view>
+        <view class="form-item"><text class="form-label">热度分</text><text class="form-value heat">{{ customer.heatScore ?? '--' }}</text></view>
       </view>
 
       <view class="form-group">
         <text class="form-group-title">跟进时间</text>
-        <view class="form-item">
-          <text class="form-label">最近跟进</text>
-          <text class="form-value">{{ formatDate(customer.lastFollowTime) }}</text>
-        </view>
-        <view class="form-item">
-          <text class="form-label">下次跟进</text>
-          <text class="form-value">{{ formatDate(customer.nextFollowTime) }}</text>
-        </view>
+        <view class="form-item"><text class="form-label">最近跟进</text><text class="form-value">{{ formatDate(customer.lastFollowTime) }}</text></view>
+        <view class="form-item"><text class="form-label">下次跟进</text><text class="form-value">{{ formatDate(customer.nextFollowTime) }}</text></view>
       </view>
 
-      <!-- 跟进记录 -->
       <view class="section-title-bar">
         <text class="section-title">跟进记录</text>
         <text class="section-count">{{ follows.length }}条</text>
@@ -84,35 +48,36 @@
       <view class="follow-list" v-if="follows.length">
         <view class="follow-item" v-for="f in follows" :key="f.id">
           <view class="follow-head">
-            <view class="follow-method-tag">{{ FOLLOW_METHOD[f.method] }}</view>
+            <view class="follow-method-tag">{{ FOLLOW_METHOD[f.method] || f.method }}</view>
             <view class="follow-result-tag" :style="{ color: FOLLOW_RESULT[f.result] ? FOLLOW_RESULT[f.result].color : '' }">
-              {{ FOLLOW_RESULT[f.result] ? FOLLOW_RESULT[f.result].label : '' }}
+              {{ FOLLOW_RESULT[f.result] ? FOLLOW_RESULT[f.result].label : f.result }}
             </view>
             <text class="follow-time">{{ formatDate(f.createdAt) }}</text>
           </view>
-          <text class="follow-content" v-if="f.summary">{{ f.summary }}</text>
+          <text class="follow-content" v-if="f.summary || f.content">{{ f.summary || f.content }}</text>
           <text class="follow-next" v-if="f.nextFollowTime">下次跟进：{{ formatDate(f.nextFollowTime, 'MM-DD HH:mm') }}</text>
         </view>
       </view>
-      <EmptyState v-else icon="📝" text="暂无跟进记录" />
+      <EmptyState v-else icon="记" text="暂无跟进记录" />
 
       <view style="height: 32rpx;" />
     </view>
 
-    <!-- 底部操作栏 -->
-    <view class="bottom-bar">
-      <button class="btn btn-secondary" style="flex:1" @tap="callCustomer">📞 电话</button>
+    <view class="bottom-bar" v-if="customer">
+      <button class="btn btn-secondary" style="flex:1" @tap="callCustomer">电话</button>
       <button class="btn btn-primary" style="flex:2" @tap="goFollow">记录跟进</button>
-      <button class="btn btn-secondary" style="flex:1" @tap="goEdit">编辑</button>
+      <button class="btn btn-secondary" style="flex:1" @tap="showMoreActions">更多</button>
     </view>
   </view>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { onLoad } from '@dcloudio/uni-app'
+import { ref } from 'vue'
+import { onLoad, onShow } from '@dcloudio/uni-app'
+import { customerApi } from '../../api/customer'
 import { formatDate, formatBudget } from '../../utils/format'
-import { CUSTOMER_STATUS, INTENT_LEVEL, GENDER, CUSTOMER_SOURCE, PURCHASE_PURPOSE, FOLLOW_METHOD, FOLLOW_RESULT } from '../../constants/dictionary'
+import { mapCustomer, mapFollow } from '../../utils/adapters'
+import { GENDER, CUSTOMER_SOURCE, PURCHASE_PURPOSE, FOLLOW_METHOD, FOLLOW_RESULT } from '../../constants/dictionary'
 import StatusTag from '../../components/StatusTag.vue'
 import EmptyState from '../../components/EmptyState.vue'
 
@@ -120,38 +85,48 @@ const customer = ref(null)
 const follows = ref([])
 let customerId = null
 
-// mock 数据
-const MOCK_CUSTOMERS = {
-  1: { id: 1, name: '张先生', phone: '13812345678', gender: 'MALE', age: 35, source: 'WECHAT', status: 'FOLLOWING', intentLevel: 'HIGH', budgetMin: 150, budgetMax: 200, focusArea: '天府新区', houseType: '三室两厅', purpose: 'SELF_USE', heatScore: 85, remark: '急需在6月前购房', lastFollowTime: Date.now() - 86400000, nextFollowTime: Date.now() + 3600000 },
-  2: { id: 2, name: '李女士', phone: '13987654321', gender: 'FEMALE', age: 28, source: 'VISIT', status: 'VISITED', intentLevel: 'HIGH', budgetMin: 200, budgetMax: 300, focusArea: '高新区', houseType: '两室一厅', purpose: 'INVEST', heatScore: 92, remark: '看过两套，比较满意', lastFollowTime: Date.now() - 3600000, nextFollowTime: Date.now() + 7200000 }
-}
-
-const MOCK_FOLLOWS = {
-  1: [
-    { id: 1, method: 'PHONE', result: 'CONNECTED', summary: '客户表示近期资金到位，希望尽快看房，对天府新区三室户型感兴趣', nextFollowTime: Date.now() + 3600000, createdAt: Date.now() - 86400000 },
-    { id: 2, method: 'WECHAT', result: 'WAITING', summary: '发送了天府新区新盘资料，客户表示需要再考虑', nextFollowTime: null, createdAt: Date.now() - 172800000 }
-  ],
-  2: [
-    { id: 3, method: 'VISIT', result: 'VISITED', summary: '带客户参观了高新区两套房源，客户对B区2号楼较为满意，有意向签约', nextFollowTime: Date.now() + 7200000, createdAt: Date.now() - 3600000 }
-  ]
-}
-
 onLoad((options) => {
-  customerId = options && options.id
-  customer.value = MOCK_CUSTOMERS[customerId] || MOCK_CUSTOMERS[1]
-  follows.value = MOCK_FOLLOWS[customerId] || []
+  customerId = options?.id
 })
+
+onShow(() => {
+  if (customerId) fetchData()
+})
+
+async function fetchData() {
+  const [detail, followData] = await Promise.all([
+    customerApi.detail(customerId),
+    customerApi.follows(customerId, { pageNum: 1, pageSize: 50 }).catch(() => [])
+  ])
+  customer.value = mapCustomer(detail || {})
+  follows.value = (Array.isArray(followData) ? followData : (followData?.list || [])).map(mapFollow)
+}
 
 function callCustomer() {
   uni.makePhoneCall({ phoneNumber: customer.value.phone, fail() {} })
 }
 
 function goFollow() {
-  uni.navigateTo({ url: `/pages/follow/form?customerId=${customer.value.id}&customerName=${customer.value.name}` })
+  uni.navigateTo({ url: `/pages/follow/form?customerId=${customer.value.id}&customerName=${encodeURIComponent(customer.value.name)}` })
 }
 
 function goEdit() {
   uni.navigateTo({ url: `/pages/customer/form?id=${customer.value.id}` })
+}
+
+function showMoreActions() {
+  const actions = ['编辑客户', 'AI跟进话术', '客户云笔记', '竞品对比']
+  uni.showActionSheet({
+    itemList: actions,
+    success(res) {
+      const id = customer.value.id
+      const name = encodeURIComponent(customer.value.name)
+      if (res.tapIndex === 0) goEdit()
+      if (res.tapIndex === 1) uni.navigateTo({ url: `/pages/ai/script?customerId=${id}&customerName=${name}` })
+      if (res.tapIndex === 2) uni.navigateTo({ url: `/pages/note/list?customerId=${id}` })
+      if (res.tapIndex === 3) uni.navigateTo({ url: `/pages/competitor/compare?customerId=${id}&customerName=${name}` })
+    }
+  })
 }
 </script>
 
@@ -187,6 +162,7 @@ function goEdit() {
 
   .head-info {
     flex: 1;
+    min-width: 0;
 
     .name-row {
       display: flex;

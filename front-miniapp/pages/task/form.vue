@@ -69,15 +69,19 @@
 import { ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { TASK_TYPE, TASK_PRIORITY } from '../../constants/dictionary'
+import { taskApi } from '../../api/task'
+import { useUserStore } from '../../stores/user'
 
 const form = ref({ taskType: '', title: '', priority: 'MEDIUM', date: '', time: '', content: '' })
 const saving = ref(false)
 const customerName = ref('')
 let customerId = null
+const { userInfo, loadUser } = useUserStore()
 
 onLoad((options) => {
   customerId = options?.customerId
   customerName.value = options?.customerName || ''
+  loadUser()
   if (options?.customerName) {
     form.value.title = `跟进${options.customerName}`
   }
@@ -101,8 +105,20 @@ async function save() {
   if (!form.value.title.trim()) { uni.showToast({ title: '请输入任务标题', icon: 'none' }); return }
   if (!form.value.date) { uni.showToast({ title: '请选择任务日期', icon: 'none' }); return }
   saving.value = true
-  await new Promise(r => setTimeout(r, 600))
-  saving.value = false
+  try {
+    await taskApi.create({
+      customerId: customerId ? Number(customerId) : undefined,
+      taskType: form.value.taskType,
+      title: form.value.title,
+      content: form.value.content,
+      taskDate: form.value.date,
+      taskTime: form.value.time,
+      priority: form.value.priority,
+      ownerId: userInfo.value?.id
+    })
+  } finally {
+    saving.value = false
+  }
   uni.showToast({ title: '任务已创建', icon: 'success' })
   setTimeout(() => uni.navigateBack(), 1200)
 }

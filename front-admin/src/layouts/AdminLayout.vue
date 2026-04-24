@@ -28,6 +28,19 @@
           <router-link to="/customer/high-intent" class="nav-item" active-class="active">
             <span class="nav-icon">⭐</span>高意向客户
           </router-link>
+          <router-link to="/customer/tags" class="nav-item" active-class="active">
+            <span class="nav-icon">#</span>客户标签
+          </router-link>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-label">项目管理</div>
+          <router-link to="/project/list" class="nav-item" active-class="active">
+            <span class="nav-icon">楼</span>楼盘管理
+          </router-link>
+          <router-link to="/project/competitors" class="nav-item" active-class="active">
+            <span class="nav-icon">竞</span>竞品管理
+          </router-link>
         </div>
 
         <div class="nav-section">

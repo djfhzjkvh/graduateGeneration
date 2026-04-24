@@ -59,6 +59,8 @@ graduate_generation
 - `GET /api/app/tasks`
 - `POST /api/app/tasks`
 - `PUT /api/app/tasks/{id}/complete`
+- `PUT /api/app/tasks/{id}/delay`
+- `GET /api/app/tasks/{taskId}/remind-logs`
 - `GET /api/app/messages?userId=4`
 - `PUT /api/app/messages/{id}/read`
 - `PUT /api/app/messages/read-all?userId=4`
@@ -76,6 +78,9 @@ graduate_generation
 - `GET /api/app/customers/{customerId}/competitor-history`
 - `GET /api/admin/customers`
 - `GET /api/admin/tasks`
+- `GET /api/admin/tasks/stat`
+- `GET /api/admin/tasks/remind-logs`
+- `PUT /api/admin/tasks/{id}/transfer`
 - `GET /api/admin/customer-tags`
 - `POST /api/admin/customer-tags`
 - `PUT /api/admin/customer-tags/{id}`
@@ -106,6 +111,10 @@ graduate_generation
 - `GET /api/admin/reports/daily`
 - `GET /api/admin/reports/conversion`
 - `GET /api/admin/reports/source`
+- `POST /api/admin/jobs/refresh-overdue-tasks`
+- `POST /api/admin/jobs/generate-follow-tasks`
+- `POST /api/admin/jobs/remind-due-soon-tasks`
+- `POST /api/admin/jobs/generate-daily-report`
 - `GET /api/admin/configs`
 - `PUT /api/admin/configs/{key}`
 - `GET /api/admin/ai/config`

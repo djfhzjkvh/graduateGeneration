@@ -1,6 +1,5 @@
 <template>
   <view class="page-container">
-    <!-- 顶部用户信息 -->
     <view class="user-banner">
       <view class="user-info">
         <text class="greeting">{{ greeting }}，{{ displayName }}</text>
@@ -11,7 +10,6 @@
       </view>
     </view>
 
-    <!-- 数据概览卡片 -->
     <view class="stats-grid">
       <view class="stat-card" v-for="item in stats" :key="item.label">
         <text class="stat-num" :style="{ color: item.color }">{{ item.value }}</text>
@@ -19,7 +17,6 @@
       </view>
     </view>
 
-    <!-- 快捷操作 -->
     <view class="section">
       <text class="section-title">快捷操作</text>
       <view class="quick-grid">
@@ -32,7 +29,6 @@
       </view>
     </view>
 
-    <!-- 今日待办 -->
     <view class="section">
       <view class="section-header">
         <text class="section-title">今日待办</text>
@@ -47,10 +43,9 @@
           @complete="completeTask"
         />
       </view>
-      <EmptyState v-else icon="✅" text="今日暂无待办任务" />
+      <EmptyState v-else icon="✓" text="今日暂无待办任务" />
     </view>
 
-    <!-- 高意向客户 -->
     <view class="section">
       <view class="section-header">
         <text class="section-title">高意向客户</text>
@@ -65,7 +60,7 @@
           @tap="goCustomerDetail"
         />
       </view>
-      <EmptyState v-else icon="👥" text="暂无高意向客户" />
+      <EmptyState v-else icon="客" text="暂无高意向客户" />
     </view>
 
     <view style="height: 32rpx;" />
@@ -74,18 +69,29 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { onPullDownRefresh } from '@dcloudio/uni-app'
 import { useUserStore } from '../../stores/user'
+import { dashboardApi } from '../../api/dashboard'
+import { taskApi } from '../../api/task'
 import { formatDate } from '../../utils/format'
+import { mapCustomer, mapTask } from '../../utils/adapters'
 import TaskCard from '../../components/TaskCard.vue'
 import CustomerCard from '../../components/CustomerCard.vue'
 import EmptyState from '../../components/EmptyState.vue'
 
 const { userInfo, loadUser } = useUserStore()
+const todayTasks = ref([])
+const highIntentCustomers = ref([])
+const overview = ref({
+  todayTaskCount: 0,
+  overdueTaskCount: 0,
+  highIntentCustomerCount: 0,
+  newCustomerCount: 0
+})
 
-const displayName = computed(() => (userInfo.value && userInfo.value.name) || '')
-const displayDept = computed(() => (userInfo.value && userInfo.value.deptName) || '')
-const avatarChar = computed(() => (userInfo.value && userInfo.value.name && userInfo.value.name.charAt(0)) || '?')
-
+const displayName = computed(() => userInfo.value?.name || userInfo.value?.username || '')
+const displayDept = computed(() => userInfo.value?.deptName || '')
+const avatarChar = computed(() => (displayName.value || '?').charAt(0))
 const today = formatDate(Date.now(), 'MM月DD日')
 
 const greeting = computed(() => {
@@ -95,53 +101,37 @@ const greeting = computed(() => {
   return '晚上好'
 })
 
-// mock 数据
-const stats = ref([
-  { label: '今日待跟进', value: 5, color: '#1a56db' },
-  { label: '逾期任务', value: 2, color: '#c81e1e' },
-  { label: '高意向客户', value: 8, color: '#c27803' },
-  { label: '今日新增', value: 1, color: '#057a55' }
-])
-
-const todayTasks = ref([
-  {
-    id: 1, title: '回访张先生购房意向', customerName: '张先生',
-    taskType: 'CALL', status: 'PENDING', priority: 'HIGH',
-    planTime: new Date().setHours(10, 0)
-  },
-  {
-    id: 2, title: '安排李女士看房', customerName: '李女士',
-    taskType: 'VISIT', status: 'PENDING', priority: 'URGENT',
-    planTime: new Date().setHours(14, 30)
-  },
-  {
-    id: 3, title: '跟进王先生贷款事宜', customerName: '王先生',
-    taskType: 'FOLLOW', status: 'OVERDUE', priority: 'MEDIUM',
-    planTime: new Date(Date.now() - 86400000)
-  }
-])
-
-const highIntentCustomers = ref([
-  {
-    id: 1, name: '张先生', phone: '13812345678',
-    status: 'FOLLOWING', intentLevel: 'HIGH',
-    budgetMin: 150, budgetMax: 200,
-    focusArea: '天府新区', nextFollowTime: new Date().setHours(10, 0)
-  },
-  {
-    id: 2, name: '李女士', phone: '13987654321',
-    status: 'VISITED', intentLevel: 'HIGH',
-    budgetMin: 200, budgetMax: 300,
-    focusArea: '高新区', nextFollowTime: new Date().setHours(14, 30)
-  }
+const stats = computed(() => [
+  { label: '今日待跟进', value: overview.value.todayTaskCount || 0, color: '#1a56db' },
+  { label: '逾期任务', value: overview.value.overdueTaskCount || 0, color: '#c81e1e' },
+  { label: '高意向客户', value: overview.value.highIntentCustomerCount || 0, color: '#c27803' },
+  { label: '今日新增', value: overview.value.newCustomerCount || 0, color: '#057a55' }
 ])
 
 const quickActions = [
-  { label: '新增客户', icon: '➕', bg: '#e8effd', action: () => uni.navigateTo({ url: '/pages/customer/form' }) },
-  { label: '记录跟进', icon: '📝', bg: '#d1fae5', action: () => uni.navigateTo({ url: '/pages/follow/form' }) },
-  { label: '创建任务', icon: '📋', bg: '#fef3c7', action: () => uni.navigateTo({ url: '/pages/task/form' }) },
-  { label: '客户搜索', icon: '🔍', bg: '#f3f4f6', action: goCustomerList }
+  { label: '新增客户', icon: '+', bg: '#e8effd', action: () => uni.navigateTo({ url: '/pages/customer/form' }) },
+  { label: '记录跟进', icon: '记', bg: '#d1fae5', action: () => uni.navigateTo({ url: '/pages/follow/form' }) },
+  { label: '创建任务', icon: '任', bg: '#fef3c7', action: () => uni.navigateTo({ url: '/pages/task/form' }) },
+  { label: '客户搜索', icon: '搜', bg: '#f3f4f6', action: goCustomerList }
 ]
+
+function currentUserId() {
+  loadUser()
+  return userInfo.value?.id
+}
+
+async function fetchData() {
+  const userId = currentUserId()
+  if (!userId) return
+  try {
+    const data = await dashboardApi.workbench({ userId })
+    overview.value = data || overview.value
+    todayTasks.value = (data?.todayTasks || []).map(mapTask)
+    highIntentCustomers.value = (data?.highIntentCustomers || []).map(mapCustomer)
+  } finally {
+    uni.stopPullDownRefresh()
+  }
+}
 
 function goCustomerList() { uni.switchTab({ url: '/pages/customer/list' }) }
 function goTaskList() { uni.switchTab({ url: '/pages/task/list' }) }
@@ -151,24 +141,18 @@ function goTaskDetail(t) { uni.navigateTo({ url: `/pages/task/detail?id=${t.id}`
 function completeTask(task) {
   uni.showModal({
     title: '完成任务',
-    content: `确认完成任务「${task.title}」？`,
-    success(res) {
-      if (res.confirm) {
-        task.status = 'DONE'
-        uni.showToast({ title: '已完成', icon: 'success' })
-      }
+    content: `确认完成任务“${task.title}”？`,
+    success: async (res) => {
+      if (!res.confirm) return
+      await taskApi.complete(task.id)
+      uni.showToast({ title: '已完成', icon: 'success' })
+      fetchData()
     }
   })
 }
 
-onMounted(() => {
-  loadUser()
-})
-
-onPullDownRefresh(() => {
-  uni.showToast({ title: '已刷新', icon: 'success' })
-  uni.stopPullDownRefresh()
-})
+onMounted(fetchData)
+onPullDownRefresh(fetchData)
 </script>
 
 <style lang="scss" scoped>
@@ -243,7 +227,7 @@ onPullDownRefresh(() => {
 }
 
 .section {
-  padding: 32rpx 24rpx 0;
+  padding: 32rpx 16rpx 0;
 
   .section-header {
     display: flex;
@@ -268,7 +252,7 @@ onPullDownRefresh(() => {
 
 .quick-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr;
+  grid-template-columns: repeat(4, 1fr);
   gap: 16rpx;
 
   .quick-item {
@@ -286,7 +270,9 @@ onPullDownRefresh(() => {
       justify-content: center;
 
       .quick-icon {
-        font-size: 44rpx;
+        font-size: 32rpx;
+        font-weight: 800;
+        color: #1f2937;
       }
     }
 

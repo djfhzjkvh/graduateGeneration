@@ -58,7 +58,7 @@ const menuItems = [
   { icon: '👤', label: '个人资料', action: () => uni.showToast({ title: '开发中', icon: 'none' }) },
   { icon: '👥', label: '我的客户', action: () => uni.switchTab({ url: '/pages/customer/list' }) },
   { icon: '📋', label: '我的任务', action: () => uni.switchTab({ url: '/pages/task/list' }) },
-  { icon: '🔔', label: '消息通知', action: () => uni.showToast({ title: '暂未开放', icon: 'none' }) }
+  { icon: '🔔', label: '消息通知', action: () => uni.navigateTo({ url: '/pages/message/list' }) }
 ]
 
 function handleLogout() {

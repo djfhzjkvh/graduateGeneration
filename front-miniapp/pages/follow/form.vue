@@ -4,6 +4,7 @@
     <view class="customer-info-bar" v-if="customerName">
       <text class="ci-label">跟进客户</text>
       <text class="ci-name">{{ customerName }}</text>
+      <text class="script-link" @tap="goAiScript">AI话术</text>
     </view>
 
     <view class="form-group" style="margin-top: 24rpx;">
@@ -80,11 +81,14 @@
 import { ref, computed } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { FOLLOW_METHOD, FOLLOW_RESULT } from '../../constants/dictionary'
+import { followApi } from '../../api/follow'
+import { useUserStore } from '../../stores/user'
 
 const form = ref({ method: '', result: '', content: '', summary: '', nextFollowDate: '', duration: '' })
 const saving = ref(false)
 const customerName = ref('')
 let customerId = null
+const { userInfo, loadUser } = useUserStore()
 
 const followResultLabel = computed(() => {
   const cfg = FOLLOW_RESULT[form.value.result]
@@ -94,6 +98,7 @@ const followResultLabel = computed(() => {
 onLoad((options) => {
   customerId = options?.customerId
   customerName.value = options?.customerName || ''
+  loadUser()
 })
 
 const PICKER_CFG = {
@@ -111,14 +116,33 @@ function showPicker(field) {
 
 function onDateChange(e) { form.value.nextFollowDate = e.detail.value }
 
+function goAiScript() {
+  if (!customerId) {
+    uni.showToast({ title: '请先选择客户', icon: 'none' })
+    return
+  }
+  uni.navigateTo({ url: `/pages/ai/script?customerId=${customerId}&customerName=${encodeURIComponent(customerName.value)}` })
+}
+
 async function save() {
   if (!form.value.method) { uni.showToast({ title: '请选择跟进方式', icon: 'none' }); return }
   if (!form.value.result) { uni.showToast({ title: '请选择跟进结果', icon: 'none' }); return }
   if (!form.value.content.trim()) { uni.showToast({ title: '请填写跟进内容', icon: 'none' }); return }
 
   saving.value = true
-  await new Promise(r => setTimeout(r, 600))
-  saving.value = false
+  try {
+    await followApi.create({
+      customerId: Number(customerId),
+      followType: form.value.method,
+      followResult: form.value.result,
+      content: form.value.content,
+      summary: form.value.summary,
+      nextFollowTime: form.value.nextFollowDate,
+      userId: userInfo.value?.id
+    })
+  } finally {
+    saving.value = false
+  }
 
   // 如果填写了下次跟进时间，提示是否创建任务
   if (form.value.nextFollowDate) {
@@ -161,6 +185,13 @@ async function save() {
     font-size: 28rpx;
     color: #111827;
     font-weight: 600;
+  }
+
+  .script-link {
+    margin-left: auto;
+    font-size: 24rpx;
+    color: #1a56db;
+    font-weight: 700;
   }
 }
 

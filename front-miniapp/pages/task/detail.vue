@@ -8,34 +8,19 @@
         </view>
         <view class="header-meta">
           <StatusTag type="priority" :value="task.priority" />
-          <text class="task-type">{{ TASK_TYPE[task.taskType] }}</text>
+          <text class="task-type">{{ TASK_TYPE[task.taskType] || task.taskType }}</text>
         </view>
       </view>
 
       <view class="form-group" style="margin-top:24rpx;">
         <text class="form-group-title">任务信息</text>
-        <view class="form-item">
-          <text class="form-label">计划时间</text>
-          <text class="form-value">{{ formatDate(task.planTime, 'YYYY-MM-DD HH:mm') }}</text>
-        </view>
-        <view class="form-item">
-          <text class="form-label">关联客户</text>
-          <text class="form-value" :style="{ color: '#1a56db' }" @tap="goCustomer">{{ task.customerName }}</text>
-        </view>
-        <view class="form-item" v-if="task.content">
-          <text class="form-label">任务说明</text>
-          <text class="form-value" style="text-align:left; flex:1;">{{ task.content }}</text>
-        </view>
-        <view class="form-item" v-if="task.doneTime">
-          <text class="form-label">完成时间</text>
-          <text class="form-value">{{ formatDate(task.doneTime, 'YYYY-MM-DD HH:mm') }}</text>
-        </view>
-        <view class="form-item">
-          <text class="form-label">创建时间</text>
-          <text class="form-value">{{ formatDate(task.createdAt, 'YYYY-MM-DD HH:mm') }}</text>
-        </view>
+        <view class="form-item"><text class="form-label">计划时间</text><text class="form-value">{{ formatDate(task.planTime, 'YYYY-MM-DD HH:mm') }}</text></view>
+        <view class="form-item"><text class="form-label">关联客户</text><text class="form-value link" @tap="goCustomer">{{ task.customerName || '--' }}</text></view>
+        <view class="form-item" v-if="task.content"><text class="form-label">任务说明</text><text class="form-value text-left">{{ task.content }}</text></view>
+        <view class="form-item" v-if="task.doneTime"><text class="form-label">完成时间</text><text class="form-value">{{ formatDate(task.doneTime, 'YYYY-MM-DD HH:mm') }}</text></view>
       </view>
     </view>
+    <EmptyState v-else icon="任" text="任务不存在或已被删除" />
 
     <view class="bottom-bar" v-if="task">
       <button v-if="task.status === 'PENDING'" class="btn btn-primary" style="flex:2" @tap="completeTask">完成任务</button>
@@ -48,41 +33,48 @@
 <script setup>
 import { ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
+import { taskApi } from '../../api/task'
 import { formatDate } from '../../utils/format'
+import { mapTask } from '../../utils/adapters'
 import { TASK_TYPE } from '../../constants/dictionary'
 import StatusTag from '../../components/StatusTag.vue'
+import EmptyState from '../../components/EmptyState.vue'
 
 const task = ref(null)
-
-const MOCK_TASKS = {
-  1: { id: 1, title: '回访张先生购房意向', customerName: '张先生', customerId: 1, taskType: 'CALL', status: 'PENDING', priority: 'HIGH', planTime: new Date().setHours(10, 0), content: '上次通话中，客户表示资金快到位，本次主要确认看房时间', createdAt: Date.now() - 86400000, doneTime: null },
-  2: { id: 2, title: '安排李女士看房', customerName: '李女士', customerId: 2, taskType: 'VISIT', status: 'PENDING', priority: 'URGENT', planTime: new Date().setHours(14, 30), content: '客户指定要看高新区B地块3-4楼户型', createdAt: Date.now() - 43200000, doneTime: null }
-}
+let taskId = null
 
 onLoad((options) => {
-  task.value = MOCK_TASKS[options?.id] || MOCK_TASKS[1]
+  taskId = options?.id
+  fetchTask()
 })
+
+async function fetchTask() {
+  const data = await taskApi.list({ pageNum: 1, pageSize: 100 })
+  const found = (data?.list || []).find(item => String(item.id) === String(taskId))
+  task.value = found ? mapTask(found) : null
+}
 
 function completeTask() {
   uni.showModal({
     title: '完成任务',
     content: '确认完成该任务？',
-    success(res) {
-      if (res.confirm) {
-        task.value.status = 'DONE'
-        task.value.doneTime = Date.now()
-        uni.showToast({ title: '已完成', icon: 'success' })
-      }
+    success: async (res) => {
+      if (!res.confirm) return
+      await taskApi.complete(task.value.id)
+      uni.showToast({ title: '已完成', icon: 'success' })
+      fetchTask()
     }
   })
 }
 
 function goCustomer() {
+  if (!task.value?.customerId) return
   uni.navigateTo({ url: `/pages/customer/detail?id=${task.value.customerId}` })
 }
 
 function goFollow() {
-  uni.navigateTo({ url: `/pages/follow/form?customerId=${task.value.customerId}&customerName=${task.value.customerName}` })
+  if (!task.value?.customerId) return
+  uni.navigateTo({ url: `/pages/follow/form?customerId=${task.value.customerId}&customerName=${encodeURIComponent(task.value.customerName || '')}` })
 }
 </script>
 
@@ -122,5 +114,14 @@ function goFollow() {
 
 .form-group {
   margin: 0 24rpx 24rpx;
+}
+
+.link {
+  color: #1a56db !important;
+}
+
+.text-left {
+  text-align: left !important;
+  flex: 1;
 }
 </style>

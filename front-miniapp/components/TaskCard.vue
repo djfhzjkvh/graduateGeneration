@@ -6,7 +6,10 @@
     <view class="card-content">
       <view class="top-row">
         <text class="title">{{ task.title }}</text>
-        <StatusTag type="task-status" :value="task.status" />
+        <view class="tag-with-label">
+          <text class="tag-label">状态</text>
+          <StatusTag type="task-status" :value="task.status" />
+        </view>
       </view>
       <view class="meta-row">
         <text class="customer" v-if="task.customerName">{{ task.customerName }}</text>
@@ -15,7 +18,10 @@
       </view>
       <view class="time-row">
         <text class="time">{{ formatDate(task.planTime, 'MM-DD HH:mm') }}</text>
-        <StatusTag type="priority" :value="task.priority" />
+        <view class="tag-with-label">
+          <text class="tag-label">优先级</text>
+          <StatusTag type="priority" :value="task.priority" />
+        </view>
       </view>
     </view>
     <view class="card-actions" v-if="showActions">
@@ -64,12 +70,14 @@ const priorityCfg = computed(() => TASK_PRIORITY[props.task.priority] || { color
 
 .card-content {
   flex: 1;
-  padding: 20rpx 24rpx;
+  min-width: 0;
+  padding: 20rpx 18rpx 20rpx 24rpx;
 
   .top-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 12rpx;
     margin-bottom: 8rpx;
 
     .title {
@@ -77,12 +85,32 @@ const priorityCfg = computed(() => TASK_PRIORITY[props.task.priority] || { color
       font-weight: 600;
       color: #111827;
       flex: 1;
-      margin-right: 16rpx;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+
+  .tag-with-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6rpx;
+    flex-shrink: 0;
+
+    .tag-label {
+      font-size: 20rpx;
+      color: #9ca3af;
+      line-height: 1.6;
+      white-space: nowrap;
     }
   }
 
   .meta-row {
     margin-bottom: 8rpx;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 
     .customer {
       font-size: 24rpx;
@@ -115,10 +143,12 @@ const priorityCfg = computed(() => TASK_PRIORITY[props.task.priority] || { color
 .card-actions {
   display: flex;
   align-items: center;
-  padding: 0 20rpx;
+  justify-content: center;
+  width: 88rpx;
+  flex-shrink: 0;
 
   .action-btn {
-    padding: 12rpx 16rpx;
+    padding: 12rpx 8rpx;
 
     .action-text {
       font-size: 24rpx;
